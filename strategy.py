@@ -1,4 +1,13 @@
+from dataclasses import dataclass
+from math import isfinite
+
 import config
+
+
+@dataclass(frozen=True)
+class Decision:
+    action: str
+    reason: str
 
 
 def calculate_indicators(df):
@@ -22,9 +31,22 @@ def calculate_indicators(df):
     return df
 
 
-def decide(df):
-    row = df.iloc[-1]
-    prev = df.iloc[-2]
+def decide_at(df, index):
+    if index < 1 or index >= len(df):
+        return Decision("HOLD", "not_enough_data")
+
+    row = df.iloc[index]
+    prev = df.iloc[index - 1]
+
+    indicator_values = (
+        prev["ma_fast"],
+        prev["ma_slow"],
+        row["ma_fast"],
+        row["ma_slow"],
+        row["rsi"],
+    )
+    if not all(isfinite(float(value)) for value in indicator_values):
+        return Decision("HOLD", "indicators_not_ready")
 
     bullish_cross = (
         prev["ma_fast"] <= prev["ma_slow"]
@@ -36,10 +58,16 @@ def decide(df):
         and row["ma_fast"] < row["ma_slow"]
     )
 
-    if bullish_cross and row["rsi"] < 70:
-        return "BUY"
+    if bullish_cross:
+        if row["rsi"] < config.RSI_BUY_THRESHOLD:
+            return Decision("BUY", "bullish_ma_crossover_rsi_below_70")
+        return Decision("HOLD", "bullish_ma_crossover_rsi_filter_failed")
 
     if bearish_cross:
-        return "SELL"
+        return Decision("SELL", "bearish_ma_crossover")
 
-    return "HOLD"
+    return Decision("HOLD", "no_crossover")
+
+
+def decide(df):
+    return decide_at(df, len(df) - 1)
