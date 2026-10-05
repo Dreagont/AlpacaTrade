@@ -107,6 +107,7 @@ class OptimizeLiveConfigTests(unittest.TestCase):
             optimizer.validate_candidate(_candidate(fast_ma=30, slow_ma=30))
         candidates = optimizer.generate_candidates()
         self.assertEqual(len(candidates), 24000)
+        self.assertEqual(len(optimizer.group_candidates(candidates)), 300)
         self.assertTrue(all(candidate.slow_ma > candidate.fast_ma for candidate in candidates))
         self.assertEqual(optimizer.candidate_count(), 24000)
 
@@ -255,7 +256,12 @@ class OptimizeLiveConfigTests(unittest.TestCase):
             patch.object(optimizer, "_evaluate_candidate", side_effect=rows),
             redirect_stdout(io.StringIO()),
         ):
-            optimizer.run_optimizer(end_time=end, timeframes=("5Min", "15Min"), output=None)
+            optimizer.run_optimizer(
+                end_time=end,
+                timeframes=("5Min", "15Min"),
+                output=None,
+                engine="reference",
+            )
         self.assertEqual(fetch.call_count, 2)
         self.assertEqual([call.args[1] for call in fetch.call_args_list], ["5Min", "15Min"])
         self.assertTrue(

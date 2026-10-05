@@ -3,22 +3,29 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import csv
 import itertools
 import math
+import os
 import sys
+from time import perf_counter
 from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
 import pandas as pd
+import numpy as np
 
 import backtest
 import config
 import trade_config
 from research import align_research_end_time
 from strategy import StrategySpec, create_ma_rsi_strategy
+from timeframes import parse_timeframe
+import optimizer_fast
+from optimizer_fast import FastBars, FastPrepared, simulate as simulate_fast
 
 
 DEFAULT_LOOKBACK_DAYS = 30
@@ -32,6 +39,12 @@ TAKE_PROFIT_VALUES = (0.015, 0.02, 0.03, 0.04, 0.06)
 SEGMENT_DAYS = 10
 FETCH_ROBUSTNESS_BUFFER_BARS = 20
 OUTPUT_PATH = "live_config_optimization_30d.csv"
+DEFAULT_WORKERS = max(1, (os.cpu_count() or 2) - 1)
+
+_FAST_WORKER_BARS: dict[str, FastBars] = {}
+_FAST_WORKER_SEGMENTS: tuple[Segment, Segment, Segment] | None = None
+_FAST_WORKER_INDICATORS: dict[tuple[str, int, int, int], FastPrepared] = {}
+_FAST_WORKER_SETTINGS: tuple[float, float, float, float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -335,6 +348,249 @@ def _evaluate_candidate(
     return row
 
 
+def _initialize_fast_worker(
+    bars_by_timeframe: dict[str, FastBars],
+    segments: tuple[Segment, Segment, Segment],
+    settings: tuple[float, float, float, float, float],
+) -> None:
+    global _FAST_WORKER_BARS, _FAST_WORKER_SEGMENTS
+    global _FAST_WORKER_INDICATORS, _FAST_WORKER_SETTINGS
+    _FAST_WORKER_BARS = bars_by_timeframe
+    _FAST_WORKER_SEGMENTS = segments
+    _FAST_WORKER_INDICATORS = {}
+    _FAST_WORKER_SETTINGS = settings
+
+
+def _prepare_fast_group(key: tuple[str, int, int, int]) -> FastPrepared:
+    if key in _FAST_WORKER_INDICATORS:
+        return _FAST_WORKER_INDICATORS[key]
+    timeframe, fast, slow, rsi_period = key
+    bars = _FAST_WORKER_BARS[timeframe]
+    frame = pd.DataFrame(
+        {"open": bars.open, "high": bars.high, "low": bars.low,
+         "close": bars.close, "volume": np.zeros(len(bars.close), dtype=np.float64)},
+        index=bars.index,
+    )
+    strategy = create_ma_rsi_strategy(fast, slow, rsi_period, 70, 0.01, 0.015)
+    prepared_frame = strategy.prepare_indicators(frame)
+    prepared = FastPrepared.from_frame(bars, prepared_frame)
+    _FAST_WORKER_INDICATORS[key] = prepared
+    return prepared
+
+
+def _evaluate_fast_group(
+    group: tuple[tuple[str, int, int, int], tuple[Candidate, ...]],
+) -> list[dict[str, Any]]:
+    key, candidates = group
+    prepared = _prepare_fast_group(key)
+    timeframe = key[0]
+    _, bar_minutes = parse_timeframe(timeframe)
+    segments = _FAST_WORKER_SEGMENTS
+    starting_capital, fee_rate, slippage, trade_amount, max_position = _FAST_WORKER_SETTINGS
+    rows = []
+    for candidate in candidates:
+        def run(start: pd.Timestamp, end: pd.Timestamp):
+            return simulate_fast(
+                prepared,
+                start_time=start,
+                end_time=end,
+                bar_minutes=bar_minutes,
+                rsi_threshold=candidate.rsi_threshold,
+                stop_loss_percent=candidate.stop_loss,
+                take_profit_percent=candidate.take_profit,
+                fee_rate=fee_rate,
+                slippage=slippage,
+                starting_capital=starting_capital,
+                trade_amount=trade_amount,
+                max_position=max_position,
+            )
+
+        full = run(segments[0].start, segments[-1].end)
+        row: dict[str, Any] = asdict(candidate)
+        row["rsi_threshold"] = candidate.rsi_threshold
+        row["is_current_live_baseline"] = _is_current_baseline(candidate)
+        row.update(_result_metrics(full, DEFAULT_LOOKBACK_DAYS))
+        segment_returns: list[float] = []
+        segment_trade_counts: list[int] = []
+        for segment in segments:
+            outcome = run(segment.start, segment.end)
+            segment_returns.append(float(outcome["strategy_return"]))
+            segment_trade_counts.append(int(outcome["total_trades"]))
+            row[f"segment_{segment.number}_net_return_percent"] = outcome["strategy_return"]
+            row[f"segment_{segment.number}_completed_trades"] = outcome["total_trades"]
+        profitable_count = sum(value > 0 for value in segment_returns)
+        eligible, reason = minimum_sample_status(
+            row["completed_trades"], segment_trade_counts
+        )
+        row.update(
+            {
+                "profitable_segment_count": profitable_count,
+                "worst_segment_return": min(segment_returns),
+                "median_segment_return": float(np.median(segment_returns)),
+                "eligible_for_ranking": eligible,
+                "ineligible_reason": reason,
+                "classification": classify_candidate(
+                    eligible=eligible,
+                    net_return=row["total_net_return_percent"],
+                    same_path_return=row["same_path_zero_cost_return_percent"],
+                    net_profit_factor=row["net_profit_factor"],
+                    profitable_segment_count=profitable_count,
+                ),
+            }
+        )
+        rows.append(row)
+    return rows
+
+
+def _indicator_group_key(candidate: Candidate) -> tuple[str, int, int, int]:
+    return (
+        candidate.timeframe,
+        candidate.fast_ma,
+        candidate.slow_ma,
+        candidate.rsi_period,
+    )
+
+
+def group_candidates(
+    candidates: Iterable[Candidate],
+) -> list[tuple[tuple[str, int, int, int], tuple[Candidate, ...]]]:
+    groups: dict[tuple[str, int, int, int], list[Candidate]] = {}
+    for candidate in candidates:
+        groups.setdefault(_indicator_group_key(candidate), []).append(candidate)
+    return [(key, tuple(group)) for key, group in groups.items()]
+
+
+def _run_fast_groups(
+    groups: list[tuple[tuple[str, int, int, int], tuple[Candidate, ...]]],
+    bars_by_timeframe: dict[str, pd.DataFrame],
+    segments: tuple[Segment, Segment, Segment],
+    *,
+    workers: int,
+    progress: bool = False,
+) -> list[dict[str, Any]]:
+    fast_bars = {
+        timeframe: FastBars.from_frame(bars)
+        for timeframe, bars in bars_by_timeframe.items()
+    }
+    settings = (
+        float(config.BACKTEST_STARTING_CAPITAL),
+        float(config.BACKTEST_FEE_PERCENT),
+        float(config.BACKTEST_SLIPPAGE_PERCENT),
+        float(trade_config.TRADE_AMOUNT_USD),
+        float(trade_config.MAX_POSITION_USD),
+    )
+    results: list[list[dict[str, Any]]] = []
+    total = sum(len(candidates) for _key, candidates in groups)
+    completed = 0
+    if workers == 1:
+        _initialize_fast_worker(fast_bars, segments, settings)
+        for group in groups:
+            group_rows = _evaluate_fast_group(group)
+            results.append(group_rows)
+            completed += len(group_rows)
+            if progress and (completed // 500 > (completed - len(group_rows)) // 500):
+                print(f"evaluated {(completed // 500) * 500} / {total} candidates")
+    else:
+        with ProcessPoolExecutor(
+            max_workers=workers,
+            initializer=_initialize_fast_worker,
+            initargs=(fast_bars, segments, settings),
+        ) as pool:
+            futures = [pool.submit(_evaluate_fast_group, group) for group in groups]
+            for future in as_completed(futures):
+                group_rows = future.result()
+                results.append(group_rows)
+                completed += len(group_rows)
+                if progress and (completed // 500 > (completed - len(group_rows)) // 500):
+                    print(f"evaluated {(completed // 500) * 500} / {total} candidates")
+    rows = [row for group_rows in results for row in group_rows]
+    return rows
+
+
+def _candidate_from_row(row: dict[str, Any]) -> Candidate:
+    return Candidate(
+        row["timeframe"], row["fast_ma"], row["slow_ma"], row["rsi_period"],
+        row["rsi_threshold"], row["stop_loss"], row["take_profit"],
+    )
+
+
+def _assert_row_equivalence(reference: dict[str, Any], fast: dict[str, Any]) -> None:
+    for key in (*METRIC_FIELDS, "segment_1_net_return_percent",
+                "segment_2_net_return_percent", "segment_3_net_return_percent",
+                "segment_1_completed_trades", "segment_2_completed_trades",
+                "segment_3_completed_trades", "profitable_segment_count",
+                "worst_segment_return", "median_segment_return"):
+        left = reference[key]
+        right = fast[key]
+        if left is None or right is None:
+            if left is not right:
+                raise AssertionError(f"Fast/reference mismatch for {key}: {left!r} != {right!r}")
+        elif isinstance(left, (int, np.integer)):
+            if left != right:
+                raise AssertionError(f"Fast/reference mismatch for {key}: {left!r} != {right!r}")
+        elif not math.isclose(float(left), float(right), rel_tol=1e-9, abs_tol=1e-9):
+            raise AssertionError(f"Fast/reference mismatch for {key}: {left!r} != {right!r}")
+
+
+def benchmark_engines() -> dict[str, float]:
+    """Run a deterministic local subset through both engines; never fetch data."""
+    end = pd.Timestamp("2026-10-05T00:00:00Z")
+    segments = build_segments(end)
+    timeframe = "30Min"
+    _, bar_minutes = parse_timeframe(timeframe)
+    warmup_bars = max(max(SLOW_MA_VALUES), max(RSI_PERIOD_VALUES)) + 10 + FETCH_ROBUSTNESS_BUFFER_BARS
+    first = segments[0].start - pd.Timedelta(minutes=bar_minutes * warmup_bars)
+    index = pd.date_range(
+        start=first, end=end - pd.Timedelta(minutes=bar_minutes), freq="30min"
+    )
+    rng = np.random.default_rng(20261005)
+    close = 50_000.0 * np.exp(np.cumsum(rng.normal(0.0, 0.002, len(index))))
+    open_prices = np.r_[close[0], close[:-1]] * np.exp(
+        rng.normal(0.0, 0.0008, len(index))
+    )
+    bars = pd.DataFrame(
+        {
+            "open": open_prices,
+            "high": np.maximum(open_prices, close) * 1.003,
+            "low": np.minimum(open_prices, close) * 0.997,
+            "close": close,
+            "volume": 1.0,
+        },
+        index=index,
+    )
+    candidates = generate_candidates((timeframe,))[:8]
+    reference_cache: dict[tuple[str, int, int, int], pd.DataFrame] = {}
+    started = perf_counter()
+    reference_rows = [
+        _evaluate_candidate(candidate, bars, segments, reference_cache)
+        for candidate in candidates
+    ]
+    reference_seconds = perf_counter() - started
+
+    started = perf_counter()
+    fast_rows = _run_fast_groups(
+        group_candidates(candidates), {timeframe: bars}, segments, workers=1
+    )
+    fast_seconds = perf_counter() - started
+    reference_by_candidate = {_candidate_from_row(row): row for row in reference_rows}
+    fast_by_candidate = {_candidate_from_row(row): row for row in fast_rows}
+    if reference_by_candidate.keys() != fast_by_candidate.keys():
+        raise AssertionError("Fast/reference benchmark candidate sets differ")
+    for candidate in reference_by_candidate:
+        _assert_row_equivalence(reference_by_candidate[candidate], fast_by_candidate[candidate])
+    speedup = reference_seconds / fast_seconds if fast_seconds else math.inf
+    print(f"Benchmark subset: {len(candidates)} candidates, timeframe={timeframe}")
+    print(f"Numba available: {optimizer_fast.NUMBA_AVAILABLE}")
+    print(f"reference seconds: {reference_seconds:.6f}")
+    print(f"fast seconds: {fast_seconds:.6f}")
+    print(f"speedup: {speedup:.2f}x")
+    return {
+        "reference_seconds": reference_seconds,
+        "fast_seconds": fast_seconds,
+        "speedup": speedup,
+    }
+
+
 def _quality_line(timeframe: str, diagnostics: dict[str, Any]) -> None:
     print(
         f"DATA QUALITY {timeframe}: expected={diagnostics['expected_candle_count']} "
@@ -382,12 +638,19 @@ def run_optimizer(
     timeframes: Iterable[str] = DEFAULT_TIMEFRAMES,
     end_time: datetime | None = None,
     output: str | Path | None = OUTPUT_PATH,
+    engine: str = "fast",
+    workers: int | None = None,
 ) -> list[dict[str, Any]]:
     if lookback_days != DEFAULT_LOOKBACK_DAYS:
         raise ValueError("This optimizer searches the fixed 30-day development window")
     selected_timeframes = tuple(dict.fromkeys(timeframes))
     if not selected_timeframes:
         raise ValueError("At least one timeframe is required")
+    if engine not in {"reference", "fast"}:
+        raise ValueError("engine must be 'reference' or 'fast'")
+    worker_count = DEFAULT_WORKERS if workers is None else workers
+    if worker_count < 1:
+        raise ValueError("workers must be at least 1")
     candidates = generate_candidates(selected_timeframes)
     print(f"Total candidates: {len(candidates)}")
     end = end_time or datetime.now(timezone.utc)
@@ -432,20 +695,30 @@ def run_optimizer(
         f"MAX_POSITION_USD={trade_config.MAX_POSITION_USD:g}"
     )
 
-    indicator_cache: dict[tuple[str, int, int, int], pd.DataFrame] = {}
-    rows = []
     total = len(candidates)
-    for position, candidate in enumerate(candidates, 1):
-        rows.append(
-            _evaluate_candidate(
-                candidate,
-                bars_by_timeframe[candidate.timeframe],
-                segments,
-                indicator_cache,
+    if engine == "reference":
+        indicator_cache: dict[tuple[str, int, int, int], pd.DataFrame] = {}
+        rows = []
+        for position, candidate in enumerate(candidates, 1):
+            rows.append(
+                _evaluate_candidate(
+                    candidate,
+                    bars_by_timeframe[candidate.timeframe],
+                    segments,
+                    indicator_cache,
+                )
             )
+            if position % 500 == 0 or position == total:
+                print(f"evaluated {position} / {total} candidates")
+    else:
+        groups = group_candidates(candidates)
+        rows = _run_fast_groups(
+            groups, bars_by_timeframe, segments, workers=worker_count, progress=True
         )
-        if position % 500 == 0 or position == total:
-            print(f"evaluated {position} / {total} candidates")
+        candidate_order = {candidate: i for i, candidate in enumerate(candidates)}
+        rows.sort(key=lambda row: candidate_order[_candidate_from_row(row)])
+        if total % 500:
+            print(f"evaluated {total} / {total} candidates")
 
     eligible = [row for row in rows if row["eligible_for_ranking"]]
     eligible.sort(key=ranking_key)
@@ -498,6 +771,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--end-time", help="Freeze the common research end (ISO-8601 UTC)")
     parser.add_argument("--output", default=OUTPUT_PATH)
     parser.add_argument("--no-csv", action="store_true")
+    parser.add_argument(
+        "--engine", choices=("reference", "fast"), default="fast",
+        help="backtest implementation (default: fast)",
+    )
+    parser.add_argument("--workers", type=int, default=None)
+    parser.add_argument("--benchmark", action="store_true")
     args = parser.parse_args(argv)
     end_time = None
     if args.end_time:
@@ -510,10 +789,15 @@ def main(argv: list[str] | None = None) -> int:
         if end_time.utcoffset() != timedelta(0):
             parser.error("--end-time must be UTC")
     try:
+        if args.benchmark:
+            benchmark_engines()
+            return 0
         run_optimizer(
             lookback_days=args.lookback_days,
             end_time=end_time,
             output=None if args.no_csv else args.output,
+            engine=args.engine,
+            workers=args.workers,
         )
     except (ValueError, RuntimeError) as error:
         print(f"Optimizer failed: {error}", file=sys.stderr)
