@@ -90,10 +90,15 @@ class RegimeResearchTests(unittest.TestCase):
         end = start + timedelta(days=2)
         strategy = buy_once_strategy()
         bars = persistent_position_bars(start, end, required_warmup_bars(strategy=strategy))
+        original_backtest = regime_research.backtest.run_backtest
 
         with (
             patch("regime_research.get_strategy", return_value=strategy),
             patch("regime_research.backtest.fetch_history", return_value=bars) as fetch_mock,
+            patch(
+                "regime_research.backtest.run_backtest",
+                wraps=original_backtest,
+            ) as backtest_mock,
             patch("regime_research.config.BACKTEST_FEE_PERCENT", 0.0),
             patch("regime_research.config.BACKTEST_SLIPPAGE_PERCENT", 0.0),
             patch("trade_config.TRADE_AMOUNT_USD", 100.0),
@@ -111,10 +116,12 @@ class RegimeResearchTests(unittest.TestCase):
             )
 
         self.assertEqual(fetch_mock.call_count, 1)
+        self.assertEqual(backtest_mock.call_count, 1)
+        self.assertFalse(backtest_mock.call_args.kwargs["liquidate_at_end"])
         first, second = rows
         self.assertEqual((first["entries_in_block"], first["exits_in_block"]), (1, 0))
-        self.assertEqual((second["entries_in_block"], second["exits_in_block"]), (0, 1))
-        self.assertEqual(second["winning_exits_in_block"], 1)
+        self.assertEqual((second["entries_in_block"], second["exits_in_block"]), (0, 0))
+        self.assertEqual(second["winning_exits_in_block"], 0)
         self.assertEqual(second["losing_exits_in_block"], 0)
         self.assertEqual(first["starting_equity"], 1000.0)
         self.assertAlmostEqual(first["ending_equity"], 1020.0)
@@ -125,7 +132,7 @@ class RegimeResearchTests(unittest.TestCase):
         self.assertAlmostEqual(second["ending_equity"], 1030.0)
         self.assertAlmostEqual(first["raw_btc_return_percent"], 20.0)
         self.assertAlmostEqual(second["raw_btc_return_percent"], (130 / 120 - 1) * 100)
-        self.assertEqual(second["closed_trade_net_pnl"], 30.0)
+        self.assertEqual(second["closed_trade_net_pnl"], 0.0)
         self.assertEqual([row["block_start"] for row in rows], [
             start.isoformat(), (start + timedelta(days=1)).isoformat()
         ])
@@ -157,14 +164,12 @@ class RegimeResearchTests(unittest.TestCase):
 
         entry_block, exit_block = rows
         self.assertGreater(entry_block["charged_costs_in_block"], 0)
-        self.assertGreater(exit_block["charged_costs_in_block"], 0)
-        self.assertGreater(
-            exit_block["closed_trade_costs"], exit_block["charged_costs_in_block"]
-        )
+        self.assertEqual(exit_block["charged_costs_in_block"], 0)
+        self.assertEqual(exit_block["closed_trade_costs"], 0)
         self.assertAlmostEqual(
             entry_block["charged_costs_in_block"]
             + exit_block["charged_costs_in_block"],
-            exit_block["closed_trade_costs"],
+            entry_block["charged_costs_in_block"],
         )
 
     def test_fetch_warmup_order_errors_and_csv_are_isolated(self):

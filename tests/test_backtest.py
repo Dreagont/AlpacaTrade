@@ -4,6 +4,7 @@ import pandas as pd
 
 from backtest import run_backtest
 from strategy import Decision, StrategySpec
+from unittest.mock import patch
 
 
 def flat_bars(count=4):
@@ -33,6 +34,60 @@ def test_strategy(decide_at, prepare_indicators=None):
 
 
 class BacktestAccountingTests(unittest.TestCase):
+    def test_liquidate_at_end_defaults_true_and_can_be_disabled(self):
+        bars = flat_bars(4)
+        bars.iloc[-1, bars.columns.get_loc("close")] = 120.0
+        strategy = test_strategy(
+            lambda _indicators, index: (
+                Decision("BUY", "test_buy") if index == 0 else Decision("HOLD", "hold")
+            )
+        )
+        with (
+            patch("trade_config.TRADE_AMOUNT_USD", 100.0),
+            patch("trade_config.MAX_POSITION_USD", 100.0),
+        ):
+            liquidated = run_backtest(
+                bars,
+                starting_capital=1000,
+                timeframe="5Min",
+                fee_rate=0,
+                slippage=0,
+                strategy=strategy,
+            )
+            marked = run_backtest(
+                bars,
+                starting_capital=1000,
+                timeframe="5Min",
+                fee_rate=0,
+                slippage=0,
+                strategy=strategy,
+                liquidate_at_end=False,
+            )
+
+        self.assertEqual(liquidated["trades"].iloc[0]["exit_reason"], "end_of_backtest")
+        self.assertEqual(marked["total_trades"], 0)
+        self.assertIsNotNone(marked["open_position"])
+        self.assertEqual(marked["ending_cash"], 900.0)
+        self.assertEqual(marked["ending_equity"], 1020.0)
+        self.assertEqual(marked["ending_capital"], marked["ending_equity"])
+        self.assertAlmostEqual(marked["strategy_return"], 2.0)
+
+    def test_historical_data_quality_counts_gaps_and_zero_volume(self):
+        bars = flat_bars(5).drop(index=flat_bars(5).index[2])
+        bars.loc[bars.index[1], "volume"] = 0
+        bars.attrs["requested_start_time"] = flat_bars(5).index[0]
+        bars.attrs["requested_end_time"] = flat_bars(5).index[-1] + pd.Timedelta(minutes=5)
+
+        from backtest import data_quality_diagnostics
+
+        metrics = data_quality_diagnostics(bars, "5Min")
+        self.assertEqual(metrics["expected_candle_count"], 5)
+        self.assertEqual(metrics["actual_candle_count"], 4)
+        self.assertEqual(metrics["missing_candle_count"], 1)
+        self.assertEqual(metrics["missing_candle_percent"], 20.0)
+        self.assertEqual(metrics["zero_volume_candle_count"], 1)
+        self.assertEqual(metrics["zero_volume_candle_percent"], 25.0)
+
     def test_fees_and_slippage_are_counted_once_and_cash_stays_nonnegative(self):
         def decisions(_indicators, index):
             return Decision("BUY", "test_buy") if index == 0 else Decision("SELL", "test_sell")

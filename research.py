@@ -47,6 +47,7 @@ METRICS = (
     "net_profit_factor",
     "gross_profit_factor",
     "max_drawdown",
+    "candle_mark_max_drawdown_percent",
     "raw_market_return_percent",
     "daily_sharpe",
     "daily_return_observations",
@@ -71,6 +72,12 @@ CONTEXT_FIELDS = (
     "fee_rate",
     "slippage_rate",
     "starting_capital",
+    "expected_candle_count",
+    "actual_candle_count",
+    "missing_candle_count",
+    "missing_candle_percent",
+    "zero_volume_candle_count",
+    "zero_volume_candle_percent",
 )
 
 CSV_FIELDS = (
@@ -188,6 +195,7 @@ def _research_row(
     fee_rate: float,
     slippage_rate: float,
     coverage: dict[str, Any],
+    data_quality: dict[str, Any],
 ) -> dict[str, Any]:
     duration_days = coverage["coverage_days"]
     gross_pnl = realistic_result["gross_pnl"]
@@ -210,6 +218,7 @@ def _research_row(
         "fee_rate": fee_rate,
         "slippage_rate": slippage_rate,
         "starting_capital": starting_capital,
+        **data_quality,
         "start_time": _timestamp(realistic_result["start_time"]),
         "end_time": _timestamp(realistic_result["end_time"]),
         "warmup_bars": realistic_result["warmup_bars"],
@@ -245,6 +254,9 @@ def _research_row(
         "net_profit_factor": net_profit_factor,
         "gross_profit_factor": realistic_result.get("gross_profit_factor"),
         "max_drawdown": realistic_result["max_drawdown"],
+        "candle_mark_max_drawdown_percent": realistic_result.get(
+            "candle_mark_max_drawdown_percent", realistic_result["max_drawdown"]
+        ),
         "raw_market_return_percent": realistic_result["raw_market_return_percent"],
         "daily_sharpe": realistic_result["daily_sharpe"],
         "daily_return_observations": realistic_result["daily_return_observations"],
@@ -272,6 +284,7 @@ def _failed_row(
     fee_rate: float,
     slippage_rate: float,
     coverage: dict[str, Any] | None = None,
+    data_quality: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "strategy_name": strategy_name,
@@ -291,6 +304,20 @@ def _failed_row(
         "fee_rate": fee_rate,
         "slippage_rate": slippage_rate,
         "starting_capital": starting_capital,
+        **(
+            data_quality
+            or {
+                field: None
+                for field in (
+                    "expected_candle_count",
+                    "actual_candle_count",
+                    "missing_candle_count",
+                    "missing_candle_percent",
+                    "zero_volume_candle_count",
+                    "zero_volume_candle_percent",
+                )
+            }
+        ),
         **{field: None for field in METRICS},
     }
 
@@ -364,6 +391,7 @@ def run_research(
     largest_lookback = max(lookbacks)
     history_by_timeframe = {}
     fetch_error_by_timeframe = {}
+    data_quality_by_timeframe = {}
 
     # Fetch each timeframe once for the largest window and the largest selected
     # strategy warm-up. All windows, strategies, and cost modes reuse this frame.
@@ -378,6 +406,16 @@ def run_research(
                 warmup_bars=max_strategy_warmup,
                 end_time=aligned_research_end,
             )
+            data_quality_by_timeframe[timeframe] = backtest.data_quality_diagnostics(
+                history_by_timeframe[timeframe], timeframe
+            )
+            quality = data_quality_by_timeframe[timeframe]
+            print(
+                f"DATA QUALITY {timeframe}: expected={quality['expected_candle_count']} "
+                f"actual={quality['actual_candle_count']} missing="
+                f"{quality['missing_candle_count']} ({quality['missing_candle_percent']:.2f}%) "
+                f"zero_volume={quality['zero_volume_candle_count']}"
+            )
         except Exception as error:
             fetch_error_by_timeframe[timeframe] = error
 
@@ -390,6 +428,7 @@ def run_research(
                     _strategy_parameters_json(strategy) if strategy is not None else "{}"
                 )
                 coverage = None
+                data_quality = data_quality_by_timeframe.get(timeframe)
                 try:
                     if strategy_name in strategy_error_by_name:
                         raise strategy_error_by_name[strategy_name]
@@ -444,6 +483,7 @@ def run_research(
                             fee_rate=fee_rate,
                             slippage_rate=slippage_rate,
                             coverage=coverage,
+                            data_quality=data_quality,
                         )
                     )
                     print(f"{lookback_days}d {timeframe} {strategy_name}  OK")
@@ -462,6 +502,7 @@ def run_research(
                             fee_rate=fee_rate,
                             slippage_rate=slippage_rate,
                             coverage=coverage,
+                            data_quality=data_quality,
                         )
                     )
                     print(
@@ -524,9 +565,10 @@ def _print_report(
         "SamePath0% removes costs from realistic trades without rerunning signals; "
         "FreeRun0% reruns the strategy with zero costs and can follow a different path."
     )
+    print("Drawdown is based on candle-mark equity, not tick-level intrabar worst case.")
     print(
         "Window  TF      Strategy              Trades  Trades/day  SamePath0% "
-        " Net%    Drag%  FreeRun0% NetPF   Win%   Costs  MaxDD%     BTC%"
+        " Net%    Drag%  FreeRun0% NetPF   Win%   Costs CandleMaxDD% BTC%"
     )
     for row in rows:
         window = f"{row['lookback_days']}d"

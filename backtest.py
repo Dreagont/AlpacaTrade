@@ -79,7 +79,66 @@ def fetch_history(
         raise RuntimeError(f"Historical candles are missing fields: {sorted(missing)}")
     bars.attrs["test_start"] = pd.Timestamp(test_start)
     bars.attrs["warmup_bars_requested"] = warmup_bars
+    bars.attrs["requested_start_time"] = pd.Timestamp(
+        test_start - timedelta(minutes=minutes_per_bar * warmup_bars)
+    )
+    bars.attrs["requested_end_time"] = pd.Timestamp(end)
     return bars
+
+
+def data_quality_diagnostics(
+    bars: pd.DataFrame,
+    timeframe: str,
+    *,
+    start_time: Any = None,
+    end_time: Any = None,
+) -> dict[str, int | float]:
+    """Count expected, missing, and zero-volume candles without filling gaps."""
+    _, minutes_per_bar = parse_timeframe(timeframe)
+    duration = pd.Timedelta(minutes=minutes_per_bar)
+    if bars.empty:
+        return {
+            "expected_candle_count": 0,
+            "actual_candle_count": 0,
+            "missing_candle_count": 0,
+            "missing_candle_percent": 0.0,
+            "zero_volume_candle_count": 0,
+            "zero_volume_candle_percent": 0.0,
+        }
+    index = pd.DatetimeIndex(pd.to_datetime(bars.index, utc=True))
+    requested_start = start_time or bars.attrs.get("requested_start_time") or index.min()
+    requested_end = end_time or bars.attrs.get("requested_end_time") or (index.max() + duration)
+    requested_start = pd.Timestamp(requested_start)
+    requested_end = pd.Timestamp(requested_end)
+    requested_start = requested_start.tz_localize("UTC") if requested_start.tzinfo is None else requested_start.tz_convert("UTC")
+    requested_end = requested_end.tz_localize("UTC") if requested_end.tzinfo is None else requested_end.tz_convert("UTC")
+    duration_seconds = int(duration.total_seconds())
+    epoch = pd.Timestamp("1970-01-01", tz="UTC")
+    offset_seconds = int((requested_start - epoch).total_seconds())
+    aligned_start = epoch + pd.Timedelta(
+        seconds=((offset_seconds + duration_seconds - 1) // duration_seconds) * duration_seconds
+    )
+    expected = (
+        pd.date_range(start=aligned_start, end=requested_end - duration, freq=duration)
+        if requested_end > aligned_start
+        else pd.DatetimeIndex([], tz="UTC")
+    )
+    actual_set = set(index).intersection(set(expected))
+    expected_count = len(expected)
+    actual_count = len(actual_set)
+    missing_count = max(expected_count - actual_count, 0)
+    in_span = (index >= aligned_start) & (index < requested_end)
+    actual_positions = [i for i, included in enumerate(in_span) if included]
+    volume = pd.to_numeric(bars["volume"], errors="coerce")
+    zero_volume_count = int((volume.iloc[actual_positions] == 0).sum()) if actual_positions else 0
+    return {
+        "expected_candle_count": expected_count,
+        "actual_candle_count": actual_count,
+        "missing_candle_count": missing_count,
+        "missing_candle_percent": missing_count / expected_count * 100 if expected_count else 0.0,
+        "zero_volume_candle_count": zero_volume_count,
+        "zero_volume_candle_percent": zero_volume_count / actual_count * 100 if actual_count else 0.0,
+    }
 
 
 def _trade_row(
@@ -157,6 +216,7 @@ def run_backtest(
     slippage: Optional[float] = None,
     test_start: Optional[Any] = None,
     strategy: StrategySpec | None = None,
+    liquidate_at_end: bool = True,
 ) -> dict[str, Any]:
     starting_capital = (
         config.BACKTEST_STARTING_CAPITAL
@@ -188,6 +248,7 @@ def run_backtest(
     cash = float(starting_capital)
     position: Optional[OpenPosition] = None
     completed_trades: list[dict[str, Any]] = []
+    entry_events: list[dict[str, Any]] = []
     bar_duration = pd.Timedelta(minutes=minutes_per_bar)
     equity_times = [test_bars.index[0]]
     equity_values = [cash]
@@ -219,6 +280,8 @@ def run_backtest(
         )
         position = None
 
+    # TODO: optimize this reference loop before large grids/walk-forward jobs;
+    # regression-test output against this implementation before replacing it.
     for candle_index in range(test_start_index, len(bars)):
         candle = bars.iloc[candle_index]
         timestamp = bars.index[candle_index]
@@ -274,6 +337,18 @@ def run_backtest(
                     entry_slippage_cost=(entry_price - open_price) * gross_quantity,
                     entry_reason=decision.reason,
                 )
+                entry_events.append(
+                    {
+                        "entry_time": timestamp,
+                        "requested_notional": requested_notional,
+                        "entry_market_price": open_price,
+                        "entry_fill_price": entry_price,
+                        "gross_quantity_before_fee": gross_quantity,
+                        "quantity_after_buy_fee": quantity,
+                        "entry_fee": buy_fee_quantity * open_price,
+                        "entry_slippage_cost": (entry_price - open_price) * gross_quantity,
+                    }
+                )
                 if cash < -1e-9:
                     raise AssertionError("Backtest cash became negative after entry")
 
@@ -325,7 +400,7 @@ def run_backtest(
                     max(open_price, take_profit_price), timestamp, "take_profit"
                 )
 
-        if candle_index == len(bars) - 1 and position is not None:
+        if candle_index == len(bars) - 1 and position is not None and liquidate_at_end:
             close_position(
                 float(candle["close"]), timestamp + bar_duration, "end_of_backtest"
             )
@@ -376,10 +451,14 @@ def run_backtest(
     total_gross_pnl = sum(trade["gross_pnl"] for trade in completed_trades)
     total_fees = sum(trade["fees"] for trade in completed_trades)
     total_slippage = sum(trade["slippage_cost"] for trade in completed_trades)
-    total_costs = total_fees + total_slippage
-
     first_open = float(test_bars.iloc[0]["open"])
     last_close = float(test_bars.iloc[-1]["close"])
+    if position is not None and not liquidate_at_end:
+        total_gross_pnl += (last_close - position.entry_market_price) * position.quantity
+        total_fees += position.buy_fee_quantity * position.entry_market_price
+        total_slippage += position.entry_slippage_cost
+    total_costs = total_fees + total_slippage
+
     full_buy_fill = first_open * (1 + slippage)
     full_buy_gross_quantity = starting_capital / full_buy_fill
     full_buy_quantity = full_buy_gross_quantity * (1 - fee_rate)
@@ -401,11 +480,21 @@ def run_backtest(
         + same_exposure_quantity * same_exposure_sell_fill * (1 - fee_rate)
     )
 
-    ending_capital = cash
+    ending_cash = cash
+    ending_equity = ending_cash + (
+        position.quantity * last_close if position is not None else 0.0
+    )
+    ending_capital = ending_equity
     strategy_return = (ending_capital / starting_capital - 1) * 100
     same_path_zero_cost_pnl_total = sum(
         trade["same_path_zero_cost_pnl"] for trade in completed_trades
     )
+    if position is not None and not liquidate_at_end and position.entry_market_price:
+        same_path_zero_cost_pnl_total += (
+            position.requested_notional
+            / position.entry_market_price
+            * (last_close - position.entry_market_price)
+        )
     same_path_zero_cost_return = same_path_zero_cost_pnl_total / starting_capital * 100
     full_buy_hold_return = (full_buy_hold_ending / starting_capital - 1) * 100
     same_notional_return = (same_notional_ending / starting_capital - 1) * 100
@@ -457,6 +546,19 @@ def run_backtest(
 
     available_pretest_bars = test_start_index
     required_strategy_warmup_bars = required_warmup_bars(strategy=selected_strategy)
+    entry_events_frame = pd.DataFrame(
+        entry_events,
+        columns=[
+            "entry_time",
+            "requested_notional",
+            "entry_market_price",
+            "entry_fill_price",
+            "gross_quantity_before_fee",
+            "quantity_after_buy_fee",
+            "entry_fee",
+            "entry_slippage_cost",
+        ],
+    )
     return {
         "strategy_name": selected_strategy.name,
         "strategy_parameters": selected_strategy.parameters,
@@ -470,12 +572,28 @@ def run_backtest(
         "available_pretest_bars": available_pretest_bars,
         "starting_capital": starting_capital,
         "ending_capital": ending_capital,
+        "ending_cash": ending_cash,
+        "ending_equity": ending_equity,
         "net_profit": ending_capital - starting_capital,
         "strategy_return": strategy_return,
         "same_path_zero_cost_pnl_total": same_path_zero_cost_pnl_total,
         "same_path_zero_cost_return_percent": same_path_zero_cost_return,
         "pure_cost_drag_percent": same_path_zero_cost_return - strategy_return,
         "trades": trades_frame,
+        "entry_events": entry_events_frame,
+        "open_position": (
+            {
+                "entry_time": position.entry_time,
+                "entry_market_price": position.entry_market_price,
+                "entry_fill_price": position.entry_price,
+                "requested_notional": position.requested_notional,
+                "gross_quantity_before_fee": position.gross_quantity,
+                "quantity_after_buy_fee": position.quantity,
+                "entry_reason": position.entry_reason,
+            }
+            if position is not None
+            else None
+        ),
         "total_trades": len(completed_trades),
         "winning_trades": len(winning_trades),
         "losing_trades": len(losing_trades),
@@ -502,6 +620,7 @@ def run_backtest(
         # Compatibility alias: profit_factor has always used net trade PnL.
         "profit_factor": net_profit_factor,
         "max_drawdown": max_drawdown,
+        "candle_mark_max_drawdown_percent": max_drawdown,
         "daily_sharpe": float(daily_sharpe) if daily_sharpe is not None else None,
         "equity_curve": equity_curve,
         "exposure_curve": exposure_curve,
@@ -617,7 +736,10 @@ def print_report(result: dict[str, Any], title=None) -> None:
         if gross_factor is None
         else f"Gross profit factor: {gross_factor:.3f}"
     )
-    print(f"Maximum drawdown: {_format_percent(result['max_drawdown'])}")
+    print(
+        "Candle-mark maximum drawdown (not tick-level worst case): "
+        f"{_format_percent(result['candle_mark_max_drawdown_percent'])}"
+    )
     sharpe = result["daily_sharpe"]
     print("Daily Sharpe ratio: N/A" if sharpe is None else f"Daily Sharpe ratio: {sharpe:.3f}")
 

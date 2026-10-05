@@ -6,17 +6,16 @@ from alpaca.data.requests import CryptoBarsRequest, CryptoLatestTradeRequest
 
 import config
 import trade_config
+from strategy import StrategySpec, get_strategy
 from timeframes import parse_timeframe
 
 data_client = CryptoHistoricalDataClient()
 
 
-def get_btc_bars(limit_bars=200):
+def get_btc_bars(limit_bars=200, *, strategy: StrategySpec | None = None):
     timeframe, minutes_per_bar = parse_timeframe(trade_config.LIVE_TIMEFRAME)
-    limit_bars = max(
-        limit_bars,
-        max(trade_config.FAST_MA, trade_config.SLOW_MA, trade_config.RSI_PERIOD) + 5,
-    )
+    selected_strategy = strategy or get_strategy(trade_config.LIVE_STRATEGY)
+    limit_bars = max(limit_bars, selected_strategy.required_warmup_bars() + 2)
     now = datetime.now(timezone.utc)
     request = CryptoBarsRequest(
         symbol_or_symbols=[config.SYMBOL],

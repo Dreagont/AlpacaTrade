@@ -31,11 +31,18 @@ class DatabaseMigrationTests(unittest.TestCase):
             connection = sqlite3.connect(path)
             try:
                 columns = {row[1] for row in connection.execute("PRAGMA table_info(orders)")}
+                evaluation_columns = {
+                    row[1]
+                    for row in connection.execute("PRAGMA table_info(strategy_evaluations)")
+                }
             finally:
                 connection.close()
             self.assertIn("realized_gross_pnl", columns)
             self.assertIn("order_status", columns)
             self.assertNotIn("realized_pnl", columns)
+            self.assertIn("client_order_id", columns)
+            self.assertIn("strategy_name", columns)
+            self.assertIn("strategy_parameters_json", evaluation_columns)
 
     def test_existing_duplicate_order_ids_are_consolidated_before_unique_index(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -62,14 +69,14 @@ class DatabaseMigrationTests(unittest.TestCase):
             connection = sqlite3.connect(path)
             try:
                 rows = connection.execute(
-                    "SELECT id, order_status FROM orders WHERE order_id='same-order'"
+                    "SELECT id, order_id, order_status FROM orders ORDER BY id"
                 ).fetchall()
                 indexes = {
                     row[1] for row in connection.execute("PRAGMA index_list(orders)")
                 }
             finally:
                 connection.close()
-        self.assertEqual(rows, [(2, "filled")])
+        self.assertEqual(rows, [(1, None, "timeout_pending"), (2, "same-order", "filled")])
         self.assertIn("idx_orders_order_id", indexes)
 
 
@@ -188,7 +195,7 @@ class BrokerOrderTests(unittest.TestCase):
             main, "upsert_order"
         ) as write_log:
             retry_candles = main.reconcile_pending_orders(pending)
-        self.assertEqual(retry_candles, [candle])
+        self.assertEqual(retry_candles, [])
         self.assertEqual(pending, {})
         self.assertEqual(write_log.call_args.kwargs["order_status"], "rejected")
 
@@ -239,11 +246,11 @@ class BrokerOrderTests(unittest.TestCase):
         self.assertEqual(logged["quantity"], 0.05)
         self.assertIsNone(logged["realized_gross_pnl"])
 
-    def test_terminal_not_filled_action_can_retry_but_timeout_cannot(self):
-        self.assertIsNone(
+    def test_terminal_not_filled_action_keeps_candle_processed(self):
+        self.assertEqual(
             main.processed_candle_after_order(
                 "candle", broker.OrderOutcome.TERMINAL_NOT_FILLED
-            )
+            ), "candle"
         )
         self.assertEqual(
             main.processed_candle_after_order("candle", broker.OrderOutcome.TIMEOUT_PENDING),
@@ -278,6 +285,39 @@ class BrokerOrderTests(unittest.TestCase):
                 finally:
                     connection.close()
         self.assertEqual(rows, [("filled", 0.2, 100.0)])
+
+    def test_client_order_id_upsert_persists_and_updates_one_database_row(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "trading.sqlite"
+            with patch.object(config, "DATABASE_PATH", str(path)):
+                common = dict(
+                    order_id="broker-id",
+                    client_order_id="bot-deterministic-id",
+                    symbol="BTC/USD",
+                    side="BUY",
+                    requested_notional=20,
+                    quantity=None,
+                    fill_price=None,
+                    reason="entry",
+                    strategy_name="ma_rsi_crossover",
+                    strategy_parameters_json='{"fast_ma":10}',
+                )
+                database.upsert_order(**common, order_status="pending")
+                database.upsert_order(
+                    **{**common, "quantity": 0.0005, "fill_price": 40000},
+                    order_status="filled",
+                )
+                connection = sqlite3.connect(path)
+                try:
+                    rows = connection.execute(
+                        "SELECT client_order_id, order_status, quantity, fill_price "
+                        "FROM orders"
+                    ).fetchall()
+                finally:
+                    connection.close()
+        self.assertEqual(
+            rows, [("bot-deterministic-id", "filled", 0.0005, 40000.0)]
+        )
 
 
 if __name__ == "__main__":

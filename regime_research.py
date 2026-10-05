@@ -28,6 +28,7 @@ REGIME_METRICS = (
     "block_net_return_percent",
     "block_net_pnl",
     "block_max_drawdown_percent",
+    "block_candle_mark_max_drawdown_percent",
     "entries_in_block",
     "exits_in_block",
     "winning_exits_in_block",
@@ -47,6 +48,12 @@ CONTEXT_FIELDS = (
     "fee_rate",
     "slippage_rate",
     "starting_capital",
+    "expected_candle_count",
+    "actual_candle_count",
+    "missing_candle_count",
+    "missing_candle_percent",
+    "zero_volume_candle_count",
+    "zero_volume_candle_percent",
 )
 
 CSV_FIELDS = (
@@ -171,7 +178,6 @@ def _block_metrics(
     block: dict[str, Any],
     *,
     timeframe: str,
-    include_final_end: bool,
 ) -> dict[str, Any]:
     start = block["block_start"]
     end = block["block_end"]
@@ -209,18 +215,20 @@ def _block_metrics(
     )
 
     trades = result["trades"].copy()
-    if trades.empty:
+    entry_events = result.get("entry_events", pd.DataFrame()).copy()
+    if entry_events.empty:
+        entry_times = pd.Series(dtype="datetime64[ns, UTC]")
         entry_mask = pd.Series(dtype=bool)
+    else:
+        entry_times = pd.to_datetime(entry_events["entry_time"], utc=True)
+        entry_mask = _in_block_mask(entry_times, start, end, include_end=False)
+    if trades.empty:
         exit_mask = pd.Series(dtype=bool)
         exited = trades
     else:
-        entry_times = pd.to_datetime(trades["entry_time"], utc=True)
         exit_times = pd.to_datetime(trades["exit_time"], utc=True)
-        entry_mask = _in_block_mask(
-            entry_times, start, end, include_end=False
-        )
         exit_mask = _in_block_mask(
-            exit_times, start, end, include_end=include_final_end
+            exit_times, start, end, include_end=False
         )
         exited = trades.loc[exit_mask]
 
@@ -235,11 +243,12 @@ def _block_metrics(
 
     # Charge entry and exit transaction costs to the block where each event occurs.
     charged_costs = 0.0
-    if not trades.empty:
-        entered = trades.loc[entry_mask]
+    if not entry_events.empty:
+        entered = entry_events.loc[entry_mask]
         charged_costs += float(
             (entered["entry_fee"] + entered["entry_slippage_cost"]).sum()
         )
+    if not trades.empty:
         charged_exits = trades.loc[exit_mask]
         charged_costs += float(
             (charged_exits["exit_fee"] + charged_exits["exit_slippage_cost"]).sum()
@@ -262,7 +271,8 @@ def _block_metrics(
         "block_net_return_percent": (end_equity / start_equity - 1) * 100,
         "block_net_pnl": block_net_pnl,
         "block_max_drawdown_percent": abs(float(drawdown.min())),
-        "entries_in_block": int(entry_mask.sum()) if not trades.empty else 0,
+        "block_candle_mark_max_drawdown_percent": abs(float(drawdown.min())),
+        "entries_in_block": int(entry_mask.sum()) if not entry_events.empty else 0,
         "exits_in_block": exits,
         "winning_exits_in_block": wins,
         "losing_exits_in_block": losses,
@@ -287,9 +297,13 @@ def _base_row(
     fee_rate: float,
     slippage_rate: float,
     starting_capital: float,
+    data_quality: dict[str, Any] | None = None,
     error: str = "",
 ) -> dict[str, Any]:
-    row = {field: None for field in REGIME_METRICS}
+    row = {
+        field: None
+        for field in (*REGIME_METRICS, "expected_candle_count", "actual_candle_count", "missing_candle_count", "missing_candle_percent", "zero_volume_candle_count", "zero_volume_candle_percent")
+    }
     row.update(
         {
             "block_index": block["block_index"],
@@ -305,6 +319,7 @@ def _base_row(
             "fee_rate": fee_rate,
             "slippage_rate": slippage_rate,
             "starting_capital": starting_capital,
+            **(data_quality or {}),
         }
     )
     return row
@@ -364,6 +379,7 @@ def run_regime_research(
     fee_rate = config.BACKTEST_FEE_PERCENT
     slippage_rate = config.BACKTEST_SLIPPAGE_PERCENT
     bars_by_timeframe: dict[str, pd.DataFrame] = {}
+    data_quality_by_timeframe: dict[str, dict[str, Any]] = {}
     fetch_errors: dict[str, Exception] = {}
     for timeframe in dict.fromkeys(timeframes):
         if timeframe in timeframe_errors:
@@ -380,6 +396,16 @@ def run_regime_research(
                 timeframe,
                 warmup_bars=max_warmup,
                 end_time=aligned_end,
+            )
+            data_quality_by_timeframe[timeframe] = backtest.data_quality_diagnostics(
+                bars_by_timeframe[timeframe], timeframe
+            )
+            quality = data_quality_by_timeframe[timeframe]
+            print(
+                f"DATA QUALITY {timeframe}: expected={quality['expected_candle_count']} "
+                f"actual={quality['actual_candle_count']} missing="
+                f"{quality['missing_candle_count']} ({quality['missing_candle_percent']:.2f}%) "
+                f"zero_volume={quality['zero_volume_candle_count']}"
             )
         except Exception as error:
             fetch_errors[timeframe] = error
@@ -412,6 +438,7 @@ def run_regime_research(
                     slippage=slippage_rate,
                     test_start=oldest_start,
                     strategy=strategy,
+                    liquidate_at_end=False,
                 )
                 if _as_utc(result["start_time"]) != oldest_start:
                     raise ValueError(
@@ -429,9 +456,8 @@ def run_regime_research(
                         bars,
                         block,
                         timeframe=timeframe,
-                        include_final_end=(index == len(regime_blocks) - 1),
                     )
-                    for index, block in enumerate(regime_blocks)
+                    for block in regime_blocks
                 ]
                 block_metrics_by_combo[(timeframe, strategy_name)] = records
             except Exception as error:
@@ -468,6 +494,7 @@ def run_regime_research(
                     fee_rate=fee_rate,
                     slippage_rate=slippage_rate,
                     starting_capital=starting_capital,
+                    data_quality=data_quality_by_timeframe.get(timeframe),
                     error=str(error) if error else "",
                 )
                 row.update(metrics)
@@ -517,7 +544,8 @@ def _print_report(
         "research.py covers nested recency windows; regime_research.py segments "
         "sequential blocks from one continuous simulation."
     )
-    print("Block  Period                                  BTC%    TF     Strategy                 Net%   MaxDD% Entries Exits")
+    print("Drawdown is candle-mark based, not tick-level intrabar worst case.")
+    print("Block  Period                                  BTC%    TF     Strategy                 Net% CandleMaxDD% Entries Exits")
     for row in rows:
         if row["error"]:
             continue
