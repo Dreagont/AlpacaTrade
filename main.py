@@ -6,7 +6,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from math import floor, isfinite
+from math import floor, isclose, isfinite
 from types import SimpleNamespace
 
 from alpaca.trading.enums import OrderSide
@@ -101,6 +101,10 @@ def _optional_float(value):
     return number if isfinite(number) else None
 
 
+def _identifier_string(value):
+    return None if value is None else str(value)
+
+
 def _live_strategy() -> StrategySpec:
     strategy_name = trade_config.LIVE_STRATEGY
     allowed_strategies = {"ma_rsi_crossover", "regime_only_4h"}
@@ -156,8 +160,10 @@ def _set_active_position(runtime, position, *, source_order=None, strategy=None)
     source_order = source_order or SimpleNamespace()
     record = {
         "asset_id": str(getattr(position, "asset_id", None) or broker_position_identifier(position)),
-        "source_order_id": getattr(source_order, "id", None) or previous.get("source_order_id"),
-        "source_client_order_id": (
+        "source_order_id": _identifier_string(
+            getattr(source_order, "id", None) or previous.get("source_order_id")
+        ),
+        "source_client_order_id": _identifier_string(
             getattr(source_order, "client_order_id", None)
             or previous.get("source_client_order_id")
         ),
@@ -187,8 +193,8 @@ def _record_unquantified_bot_position(runtime, order, strategy):
         return
     runtime.active_position = {
         "asset_id": None,
-        "source_order_id": getattr(order, "id", None),
-        "source_client_order_id": getattr(order, "client_order_id", None),
+        "source_order_id": _identifier_string(getattr(order, "id", None)),
+        "source_client_order_id": _identifier_string(getattr(order, "client_order_id", None)),
         "credited_quantity": None,
         "strategy_name": strategy.name,
         "entry_fill_price": _optional_float(getattr(order, "filled_avg_price", None)),
@@ -1600,6 +1606,92 @@ def restore_pending_orders(pending_reconciliations, strategy=None, *, runtime=No
     return pending_reconciliations
 
 
+def _reconstruct_active_position_from_ledger(position, runtime):
+    """Recover one open entry from a complete, consistently attributed net ledger."""
+    if position is None or runtime.active_position is not None:
+        return True
+    try:
+        persisted = database.get_active_bot_position()
+        if persisted is not None:
+            runtime.active_position = persisted
+            return True
+        details = database.get_bot_owned_btc_quantity_details()
+        actual = _position_quantity(position)
+        if (
+            not btc_symbol_matches(getattr(position, "symbol", None))
+            or not details.reliable or details.evidence != "complete_asset_delta_ledger"
+            or actual <= 0
+            or not isclose(actual, details.quantity, rel_tol=1e-9, abs_tol=1e-12)
+        ):
+            return False
+        balance = 0.0
+        source = None
+        for row in database.get_order_records():
+            if row.get("symbol") not in {"BTC/USD", "BTCUSD"}:
+                continue
+            quantity = _optional_float(row.get("quantity"))
+            if row.get("quantity") is not None and quantity is None:
+                return False
+            if quantity is None or quantity == 0:
+                continue
+            before = _optional_float(row.get("position_before_quantity"))
+            delta = _optional_float(row.get("asset_quantity_delta"))
+            if (
+                quantity < 0 or row.get("order_status") != "filled"
+                or before is None or delta is None
+                or not isclose(before, balance, rel_tol=1e-9, abs_tol=1e-12)
+                or abs(delta) > quantity + 1e-12
+            ):
+                return False
+            if row.get("side") == "BUY":
+                source_id = _identifier_string(row.get("order_id"))
+                client_id = _identifier_string(row.get("client_order_id"))
+                if (
+                    source is not None or not isclose(balance, 0.0, abs_tol=1e-12)
+                    or delta <= 0 or row.get("order_role") != "strategy_entry"
+                    or not row.get("strategy_name")
+                    or not source_id or source_id.startswith("client:")
+                    or not client_id or not client_id.startswith("bot-")
+                ):
+                    return False
+                source = row
+            elif row.get("side") == "SELL":
+                if (
+                    source is None or delta >= 0
+                    or row.get("strategy_name") != source["strategy_name"]
+                    or row.get("order_role") not in {
+                        "strategy_exit", "risk_exit_stop_loss", "risk_exit_take_profit",
+                        "protective_stop",
+                    }
+                ):
+                    return False
+            else:
+                return False
+            balance += delta
+            if balance < -1e-12:
+                return False
+            if isclose(balance, 0.0, abs_tol=1e-12):
+                balance, source = 0.0, None
+        if source is None or not isclose(balance, actual, rel_tol=1e-9, abs_tol=1e-12):
+            return False
+        try:
+            source_strategy = get_strategy(source["strategy_name"])
+        except ValueError:
+            return False
+        record = _set_active_position(
+            runtime, position,
+            source_order=SimpleNamespace(
+                id=source["order_id"], client_order_id=source["client_order_id"],
+                filled_avg_price=source.get("fill_price"),
+            ),
+            strategy=source_strategy,
+        )
+        return database.get_active_bot_position() == record
+    except Exception as error:
+        _mark_accounting_degraded(runtime, f"active BTC provenance recovery failed: {error}")
+        return False
+
+
 def bot_owns_position(position, runtime=None):
     """Accept only broker-confirmed active provenance or a complete net-delta ledger."""
     if position is None:
@@ -1776,6 +1868,11 @@ def run():
         if _safe_halt_on_strategy_mismatch(position, runtime, strategy):
             return
         owned, ownership_reason = bot_owns_position(position, runtime)
+        if owned and not _reconstruct_active_position_from_ledger(position, runtime):
+            print("SAFE-HALT ACTIVE POSITION PROVENANCE AMBIGUOUS: no unique source BUY and strategy")
+            return
+        if _safe_halt_on_strategy_mismatch(position, runtime, strategy):
+            return
         stale_owned_quantity = (
             _proven_bot_quantity_for_stale_position(position, runtime) if not owned else None
         )
@@ -1837,6 +1934,11 @@ def run():
             if _safe_halt_on_strategy_mismatch(position, runtime, strategy):
                 return
             owned, ownership_reason = bot_owns_position(position, runtime)
+            if owned and not _reconstruct_active_position_from_ledger(position, runtime):
+                print("SAFE-HALT ACTIVE POSITION PROVENANCE AMBIGUOUS: no unique source BUY and strategy")
+                return
+            if _safe_halt_on_strategy_mismatch(position, runtime, strategy):
+                return
             stale_owned_quantity = (
                 _proven_bot_quantity_for_stale_position(position, runtime) if not owned else None
             )

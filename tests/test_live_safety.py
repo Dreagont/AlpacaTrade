@@ -158,6 +158,8 @@ class LiveRiskAndOrderSafetyTests(unittest.TestCase):
         )
         stop = RuntimeError("cycle complete")
         with (
+            patch.object(trade_config, "LIVE_STRATEGY", "ma_rsi_crossover"),
+            patch.object(trade_config, "LIVE_TIMEFRAME", "5Min"),
             patch.object(main, "init_db", return_value=True),
             patch.object(main.client, "get_account", return_value=SimpleNamespace(cash=1, portfolio_value=1)),
             patch("database.get_active_bot_position", return_value=active),
@@ -1128,7 +1130,9 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
         self.assertIs(record.call_args.kwargs["strategy"], strategy.REGIME_ONLY_4H)
         self.assertIs(strategy.get_strategy("regime_only_4h"), strategy.REGIME_ONLY_4H)
 
-    def test_default_live_strategy_timeframe_and_ma_behavior_are_preserved(self):
+    @patch.object(trade_config, "LIVE_STRATEGY", "ma_rsi_crossover")
+    @patch.object(trade_config, "LIVE_TIMEFRAME", "5Min")
+    def test_configured_ma_live_strategy_timeframe_and_behavior_are_preserved(self):
         selected = main._live_strategy()
         self.assertEqual(trade_config.LIVE_STRATEGY, "ma_rsi_crossover")
         self.assertEqual(trade_config.LIVE_TIMEFRAME, "5Min")
@@ -1233,6 +1237,7 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
         self.assertEqual(main._risk_exit_reason(position, 35500, spec), "stop_loss")
         self.assertEqual(main._risk_exit_reason(position, 48500, spec), "take_profit")
 
+    @patch.object(trade_config, "LIVE_TIMEFRAME", "5Min")
     def test_live_market_data_warmup_is_requested_from_strategy_spec(self):
         import pandas as pd
 
@@ -1252,6 +1257,8 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
         request = request_factory.call_args.kwargs
         self.assertEqual(request["start"], request["end"] - timedelta(minutes=5 * 81))
 
+    @patch.object(trade_config, "LIVE_STRATEGY", "ma_rsi_crossover")
+    @patch.object(trade_config, "LIVE_TIMEFRAME", "5Min")
     def test_broker_stop_limit_uses_actual_broker_position_quantity(self):
         filled_buy = make_order(filled_qty="0.0037", filled_avg_price="42000")
         protective = make_order(

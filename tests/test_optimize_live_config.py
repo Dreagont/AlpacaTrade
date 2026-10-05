@@ -210,6 +210,7 @@ class OptimizeLiveConfigTests(unittest.TestCase):
         )
         self.assertLess(optimizer.ranking_key(stable), optimizer.ranking_key(lucky))
 
+    @patch.object(trade_config, "LIVE_TIMEFRAME", "5Min")
     def test_baseline_is_in_default_search_and_uses_live_values(self):
         baseline = optimizer._baseline_candidate("5Min")
         self.assertIn(baseline, optimizer.generate_candidates())
