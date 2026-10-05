@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from math import isfinite
 
-import config
+import trade_config
 
 
 @dataclass(frozen=True)
@@ -13,16 +13,17 @@ class Decision:
 def calculate_indicators(df):
     df = df.copy()
 
-    df["ma_fast"] = df["close"].rolling(config.FAST_MA).mean()
-    df["ma_slow"] = df["close"].rolling(config.SLOW_MA).mean()
+    df["ma_fast"] = df["close"].rolling(trade_config.FAST_MA).mean()
+    df["ma_slow"] = df["close"].rolling(trade_config.SLOW_MA).mean()
 
     delta = df["close"].diff()
 
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
 
-    avg_gain = gain.rolling(config.RSI_PERIOD).mean()
-    avg_loss = loss.rolling(config.RSI_PERIOD).mean()
+    # This is simple moving-average RSI smoothing, not Wilder's standard smoothing.
+    avg_gain = gain.rolling(trade_config.RSI_PERIOD).mean()
+    avg_loss = loss.rolling(trade_config.RSI_PERIOD).mean()
 
     rs = avg_gain / avg_loss
 
@@ -59,8 +60,11 @@ def decide_at(df, index):
     )
 
     if bullish_cross:
-        if row["rsi"] < config.RSI_BUY_THRESHOLD:
-            return Decision("BUY", "bullish_ma_crossover_rsi_below_70")
+        if row["rsi"] < trade_config.RSI_BUY_THRESHOLD:
+            return Decision(
+                "BUY",
+                "bullish_ma_crossover_rsi_filter_passed",
+            )
         return Decision("HOLD", "bullish_ma_crossover_rsi_filter_failed")
 
     if bearish_cross:

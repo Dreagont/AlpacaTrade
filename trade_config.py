@@ -1,0 +1,15 @@
+"""Settings that define the live trading strategy and its risk limits."""
+
+TRADE_AMOUNT_USD = 20
+MAX_POSITION_USD = 100
+
+FAST_MA = 10
+SLOW_MA = 30
+RSI_PERIOD = 14
+RSI_BUY_THRESHOLD = 70
+
+CHECK_INTERVAL_SECONDS = 60
+LIVE_TIMEFRAME = "5Min"
+
+STOP_LOSS_PERCENT = 0.02
+TAKE_PROFIT_PERCENT = 0.04

@@ -1,11 +1,11 @@
-import config
+import trade_config
 from alpaca.trading.enums import OrderSide
 
 from broker import client, get_btc_position, has_open_order
 
 
-def can_buy(amount_usd=config.TRADE_AMOUNT_USD):
-    if amount_usd <= 0 or amount_usd > config.MAX_POSITION_USD:
+def can_buy(amount_usd=trade_config.TRADE_AMOUNT_USD):
+    if amount_usd <= 0 or amount_usd > trade_config.MAX_POSITION_USD:
         return False
 
     position = get_btc_position()

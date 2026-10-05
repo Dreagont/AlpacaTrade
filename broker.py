@@ -5,11 +5,19 @@ from dotenv import load_dotenv
 
 from alpaca.common.exceptions import APIError
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest
-from alpaca.trading.requests import GetOrdersRequest
 from alpaca.trading.enums import OrderSide, QueryOrderStatus, TimeInForce
+from alpaca.trading.requests import GetOrdersRequest, MarketOrderRequest
 
 import config
+
+
+class OrderFillTimeoutError(TimeoutError):
+    """Raised when an order remains non-terminal after the reconciliation timeout."""
+
+    def __init__(self, order):
+        self.order = order
+        status = getattr(order.status, "value", order.status)
+        super().__init__(f"Order {order.id} is still non-terminal (status={status})")
 
 load_dotenv()
 
@@ -19,9 +27,10 @@ client = TradingClient(
     paper=True,
 )
 
+
 def buy_btc(amount_usd):
     order = MarketOrderRequest(
-        symbol="BTC/USD",
+        symbol=config.SYMBOL,
         notional=amount_usd,
         side=OrderSide.BUY,
         time_in_force=TimeInForce.GTC,
@@ -32,12 +41,9 @@ def buy_btc(amount_usd):
 
 def sell_btc():
     try:
-        return client.close_position("BTC/USD")
+        return client.close_position(config.SYMBOL)
     except APIError as error:
-        if (
-            error.status_code == 404
-            and error.message.lower() in {"position does not exist", "position not found"}
-        ):
+        if error.status_code == 404:
             return None
         raise
 
@@ -68,19 +74,23 @@ def wait_for_order_fill(order_id, timeout_seconds=10, poll_interval_seconds=1):
     while True:
         order = client.get_order_by_id(order_id)
         status = getattr(order.status, "value", order.status)
-        if status in terminal_statuses or time.monotonic() >= deadline:
+        if status in terminal_statuses:
             return order
-        time.sleep(min(poll_interval_seconds, max(0, deadline - time.monotonic())))
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise OrderFillTimeoutError(order)
+        time.sleep(min(poll_interval_seconds, remaining))
+
+
+def reconcile_order(order_id):
+    """Fetch the latest broker state for an order that may still be pending."""
+    return client.get_order_by_id(order_id)
 
 
 def get_btc_position():
     try:
-        return client.get_open_position("BTC/USD")
+        return client.get_open_position(config.SYMBOL)
     except APIError as error:
-        message = error.message.lower()
-        if error.status_code == 404 and message in {
-            "position does not exist",
-            "position not found",
-        }:
+        if error.status_code == 404:
             return None
         raise

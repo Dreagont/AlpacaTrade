@@ -1,5 +1,8 @@
 import argparse
+import io
 import math
+import sys
+from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -10,6 +13,7 @@ from alpaca.data.historical import CryptoHistoricalDataClient
 from alpaca.data.requests import CryptoBarsRequest
 
 import config
+import trade_config
 from strategy import calculate_indicators, decide_at
 from timeframes import parse_timeframe
 
@@ -19,8 +23,10 @@ class OpenPosition:
     entry_time: Any
     entry_price: float
     entry_market_price: float
+    requested_notional: float
+    gross_quantity: float
     quantity: float
-    entry_fee: float
+    buy_fee_quantity: float
     entry_slippage_cost: float
     entry_reason: str
 
@@ -36,7 +42,7 @@ def fetch_history(lookback_days: int, timeframe: str) -> pd.DataFrame:
     )
     bars = CryptoHistoricalDataClient().get_crypto_bars(request).df
     if bars.empty:
-        raise RuntimeError("Alpaca returned no BTC/USD candles for this period")
+        raise RuntimeError(f"Alpaca returned no candles for {config.SYMBOL} in this period")
 
     if isinstance(bars.index, pd.MultiIndex):
         try:
@@ -66,15 +72,19 @@ def _trade_row(
     exit_slippage_cost: float,
 ) -> dict[str, Any]:
     gross_pnl = (exit_market_price - position.entry_market_price) * position.quantity
-    fees = position.entry_fee + exit_fee
+    # BUY fees are withheld in BTC and valued at the entry market price; SELL fees are USD.
+    fees = position.buy_fee_quantity * position.entry_market_price + exit_fee
     slippage_cost = position.entry_slippage_cost + exit_slippage_cost
     net_pnl = gross_pnl - fees - slippage_cost
+    cash_flow_net_pnl = exit_price * position.quantity - exit_fee - position.requested_notional
+    if not math.isclose(net_pnl, cash_flow_net_pnl, rel_tol=1e-9, abs_tol=1e-9):
+        raise AssertionError("Trade PnL does not reconcile with simulated cash flows")
     gross_return = (
         gross_pnl / (position.entry_market_price * position.quantity) * 100
         if position.quantity
         else None
     )
-    invested = position.entry_price * position.quantity + position.entry_fee
+    invested = position.requested_notional
     duration_minutes = (exit_time - position.entry_time).total_seconds() / 60
     return {
         "entry_time": position.entry_time,
@@ -106,13 +116,13 @@ def run_backtest(
         if starting_capital is None
         else starting_capital
     )
-    timeframe = timeframe or config.BACKTEST_TIMEFRAME
+    timeframe = timeframe or trade_config.LIVE_TIMEFRAME
     fee_rate = config.BACKTEST_FEE_PERCENT if fee_rate is None else fee_rate
     slippage = config.BACKTEST_SLIPPAGE_PERCENT if slippage is None else slippage
     if starting_capital <= 0:
         raise ValueError("Starting capital must be greater than zero")
-    if fee_rate < 0 or slippage < 0:
-        raise ValueError("Fee and slippage assumptions cannot be negative")
+    if not 0 <= fee_rate < 1 or not 0 <= slippage < 1:
+        raise ValueError("Fee and slippage rates must be in the range [0, 1)")
     if len(bars) < 2:
         raise ValueError("At least two candles are required for a backtest")
 
@@ -121,7 +131,8 @@ def run_backtest(
     cash = float(starting_capital)
     position: Optional[OpenPosition] = None
     completed_trades: list[dict[str, Any]] = []
-    equity_times = [bars.index[0]]
+    bar_duration = pd.Timedelta(minutes=minutes_per_bar)
+    equity_times = [bars.index[0] + bar_duration]
     equity_values = [cash]
     invested_bar_count = 0
     capital_exposures: list[float] = []
@@ -135,6 +146,8 @@ def run_backtest(
         exit_fee = exit_notional * fee_rate
         exit_slippage_cost = (base_exit_price - exit_price) * position.quantity
         cash += exit_notional - exit_fee
+        if cash < -1e-9:
+            raise AssertionError("Backtest cash became negative after closing a position")
         completed_trades.append(
             _trade_row(
                 position,
@@ -156,9 +169,9 @@ def run_backtest(
         exited_at_open = False
 
         if position is not None:
-            stop_at_open = position.entry_price * (1 - config.STOP_LOSS_PERCENT)
+            stop_at_open = position.entry_price * (1 - trade_config.STOP_LOSS_PERCENT)
             take_profit_at_open = position.entry_price * (
-                1 + config.TAKE_PROFIT_PERCENT
+                1 + trade_config.TAKE_PROFIT_PERCENT
             )
             if open_price <= stop_at_open:
                 close_position(open_price, timestamp, "stop_loss")
@@ -176,25 +189,30 @@ def run_backtest(
                 exited_at_open = True
         elif position is None and decision.action == "BUY":
             requested_notional = min(
-                config.TRADE_AMOUNT_USD,
-                config.MAX_POSITION_USD,
+                trade_config.TRADE_AMOUNT_USD,
+                trade_config.MAX_POSITION_USD,
             )
             entry_price = open_price * (1 + slippage)
-            quantity = requested_notional / entry_price if entry_price else 0.0
-            entry_cost = quantity * entry_price
-            entry_fee = entry_cost * fee_rate
+            gross_quantity = requested_notional / entry_price if entry_price else 0.0
+            buy_fee_quantity = gross_quantity * fee_rate
+            quantity = gross_quantity - buy_fee_quantity
 
-            if quantity > 0 and entry_cost + entry_fee <= cash:
-                cash -= entry_cost + entry_fee
+            # BUY fee is withheld in BTC; cash pays exactly the requested USD notional.
+            if quantity > 0 and requested_notional <= cash:
+                cash -= requested_notional
                 position = OpenPosition(
                     entry_time=timestamp,
                     entry_price=entry_price,
                     entry_market_price=open_price,
+                    requested_notional=requested_notional,
+                    gross_quantity=gross_quantity,
                     quantity=quantity,
-                    entry_fee=entry_fee,
-                    entry_slippage_cost=(entry_price - open_price) * quantity,
+                    buy_fee_quantity=buy_fee_quantity,
+                    entry_slippage_cost=(entry_price - open_price) * gross_quantity,
                     entry_reason=decision.reason,
                 )
+                if cash < -1e-9:
+                    raise AssertionError("Backtest cash became negative after entry")
 
         # Measure exposure at candle open; intrabar exit timing is unknown from OHLC.
         if position is not None:
@@ -206,9 +224,9 @@ def run_backtest(
             capital_exposures.append(0.0)
 
         if position is not None and not exited_at_open:
-            stop_price = position.entry_price * (1 - config.STOP_LOSS_PERCENT)
+            stop_price = position.entry_price * (1 - trade_config.STOP_LOSS_PERCENT)
             take_profit_price = position.entry_price * (
-                1 + config.TAKE_PROFIT_PERCENT
+                1 + trade_config.TAKE_PROFIT_PERCENT
             )
             low = float(candle["low"])
             high = float(candle["high"])
@@ -224,18 +242,21 @@ def run_backtest(
                 )
 
         if candle_index == len(bars) - 1 and position is not None:
-            close_position(float(candle["close"]), timestamp, "end_of_backtest")
+            close_position(
+                float(candle["close"]), timestamp + bar_duration, "end_of_backtest"
+            )
             equity_values.append(cash)
         else:
             marked_equity = cash
             if position is not None:
                 marked_equity += position.quantity * float(candle["close"])
             equity_values.append(marked_equity)
-        equity_times.append(timestamp)
+        equity_times.append(timestamp + bar_duration)
 
     equity_curve = pd.Series(equity_values, index=pd.DatetimeIndex(equity_times))
     daily_equity = equity_curve.resample("1D").last().dropna()
     daily_returns = daily_equity.pct_change().dropna()
+    daily_return_observations = len(daily_returns)
     if len(daily_returns) >= 2 and daily_returns.std(ddof=1) > 0:
         daily_sharpe = (
             daily_returns.mean() / daily_returns.std(ddof=1) * math.sqrt(365)
@@ -260,22 +281,22 @@ def run_backtest(
     first_open = float(bars.iloc[0]["open"])
     last_close = float(bars.iloc[-1]["close"])
     full_buy_fill = first_open * (1 + slippage)
-    full_buy_quantity = starting_capital / (full_buy_fill * (1 + fee_rate))
+    full_buy_gross_quantity = starting_capital / full_buy_fill
+    full_buy_quantity = full_buy_gross_quantity * (1 - fee_rate)
     full_sell_fill = last_close * (1 - slippage)
     full_buy_hold_ending = full_buy_quantity * full_sell_fill * (1 - fee_rate)
 
-    same_exposure_notional = min(
-        config.TRADE_AMOUNT_USD,
-        config.MAX_POSITION_USD,
-        starting_capital / (1 + fee_rate),
+    same_notional = min(
+        trade_config.TRADE_AMOUNT_USD,
+        trade_config.MAX_POSITION_USD,
+        starting_capital,
     )
     same_exposure_buy_fill = first_open * (1 + slippage)
-    same_exposure_quantity = same_exposure_notional / same_exposure_buy_fill
-    same_exposure_entry_cost = same_exposure_quantity * same_exposure_buy_fill
-    same_exposure_entry_fee = same_exposure_entry_cost * fee_rate
-    same_exposure_cash = starting_capital - same_exposure_entry_cost - same_exposure_entry_fee
+    same_notional_gross_quantity = same_notional / same_exposure_buy_fill
+    same_exposure_quantity = same_notional_gross_quantity * (1 - fee_rate)
+    same_exposure_cash = starting_capital - same_notional
     same_exposure_sell_fill = last_close * (1 - slippage)
-    same_exposure_ending = (
+    same_notional_ending = (
         same_exposure_cash
         + same_exposure_quantity * same_exposure_sell_fill * (1 - fee_rate)
     )
@@ -283,7 +304,7 @@ def run_backtest(
     ending_capital = cash
     strategy_return = (ending_capital / starting_capital - 1) * 100
     full_buy_hold_return = (full_buy_hold_ending / starting_capital - 1) * 100
-    same_exposure_return = (same_exposure_ending / starting_capital - 1) * 100
+    same_notional_return = (same_notional_ending / starting_capital - 1) * 100
     trades_frame = pd.DataFrame(
         completed_trades,
         columns=[
@@ -309,7 +330,7 @@ def run_backtest(
 
     return {
         "start_time": bars.index[0],
-        "end_time": bars.index[-1],
+        "end_time": bars.index[-1] + bar_duration,
         "starting_capital": starting_capital,
         "ending_capital": ending_capital,
         "net_profit": ending_capital - starting_capital,
@@ -342,18 +363,22 @@ def run_backtest(
         "equity_curve": equity_curve,
         "full_buy_hold_ending": full_buy_hold_ending,
         "full_buy_hold_return": full_buy_hold_return,
-        "same_exposure_ending": same_exposure_ending,
-        "same_exposure_return": same_exposure_return,
-        "same_exposure_notional": same_exposure_notional,
+        "same_notional_ending": same_notional_ending,
+        "same_notional_return": same_notional_return,
+        "same_notional": same_notional,
         "gross_pnl": total_gross_pnl,
         "total_fees": total_fees,
         "total_slippage": total_slippage,
         "total_costs": total_costs,
-        "cost_percent_of_gross": (
+        "cost_percent_of_gross_profit": (
+            total_costs / total_gross_pnl * 100 if total_gross_pnl > 1e-12 else None
+        ),
+        "cost_percent_of_abs_gross_pnl": (
             total_costs / abs(total_gross_pnl) * 100
-            if abs(total_gross_pnl) > 1e-12
+            if total_gross_pnl <= 0 and abs(total_gross_pnl) > 1e-12
             else None
         ),
+        "daily_return_observations": daily_return_observations,
         "exit_reasons": (
             "stop_loss",
             "take_profit",
@@ -422,7 +447,8 @@ def _exit_reason_rows(result: dict[str, Any]) -> None:
         )
 
 
-def print_report(result: dict[str, Any], title="BTC/USD BACKTEST") -> None:
+def print_report(result: dict[str, Any], title=None) -> None:
+    title = title or f"{config.SYMBOL} BACKTEST"
     print(f"\n=== {title} ===")
     print(f"Period: {result['start_time']} to {result['end_time']}")
     print(f"Starting capital: {_format_money(result['starting_capital'])}")
@@ -448,8 +474,8 @@ def print_report(result: dict[str, Any], title="BTC/USD BACKTEST") -> None:
         f"{_format_percent(result['full_buy_hold_return'])}"
     )
     print(
-        f"Same-exposure BTC buy & hold ({_format_money(result['same_exposure_notional'])} "
-        f"invested, rest in cash): {_format_percent(result['same_exposure_return'])}"
+        f"Same-notional BTC buy & hold ({_format_money(result['same_notional'])} "
+        f"invested, rest in cash): {_format_percent(result['same_notional_return'])}"
     )
     print(f"Strategy return: {_format_percent(result['strategy_return'])}")
 
@@ -458,10 +484,16 @@ def print_report(result: dict[str, Any], title="BTC/USD BACKTEST") -> None:
     print(f"Total entry + exit fees: {_format_money(result['total_fees'])}")
     print(f"Estimated total slippage cost: {_format_money(result['total_slippage'])}")
     print(f"Net PnL: {_format_money(result['net_profit'])}")
-    print(
-        "Gross trading result consumed by costs: "
-        f"{_format_percent(result['cost_percent_of_gross'])}"
-    )
+    if result["gross_pnl"] > 0:
+        print(
+            "Costs as % of gross profit: "
+            f"{_format_percent(result['cost_percent_of_gross_profit'])}"
+        )
+    else:
+        print(
+            "Costs as % of absolute gross PnL: "
+            f"{_format_percent(result['cost_percent_of_abs_gross_pnl'])}"
+        )
 
     print("\nTrade diagnostics:")
     print(f"Average holding duration: {_format_duration(result['average_holding_minutes'])}")
@@ -481,6 +513,17 @@ def print_report(result: dict[str, Any], title="BTC/USD BACKTEST") -> None:
         "Daily Sharpe uses daily closing equity returns, a zero risk-free rate, "
         "and sqrt(365) annualization for 24/7 BTC trading."
     )
+    print(f"Daily return observations: {result['daily_return_observations']}")
+    if result["daily_return_observations"] < 60:
+        print("WARNING: Daily Sharpe is based on a short sample and is not statistically reliable.")
+    print(
+        "SL/TP backtest uses intrabar OHLC threshold detection. Live bot checks latest market "
+        "price on each poll. Therefore risk-exit execution may differ between backtest and live."
+    )
+    print(
+        "Accounting assumption: BUY fees are withheld in BTC and valued at entry market price; "
+        "SELL fees are deducted from USD proceeds. Entry cash decreases by requested notional."
+    )
 
 
 def print_zero_cost_diagnostic(result: dict[str, Any]) -> None:
@@ -493,8 +536,10 @@ def print_zero_cost_diagnostic(result: dict[str, Any]) -> None:
     print("Fees and slippage are both set to zero for this diagnostic only.")
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Backtest the BTC/USD MA/RSI strategy")
+def _run_main() -> int:
+    parser = argparse.ArgumentParser(
+        description=f"Backtest the {config.SYMBOL} MA/RSI strategy"
+    )
     parser.add_argument(
         "--starting-capital",
         type=float,
@@ -505,7 +550,7 @@ def main() -> int:
         type=int,
         default=config.BACKTEST_LOOKBACK_DAYS,
     )
-    parser.add_argument("--timeframe", default=config.BACKTEST_TIMEFRAME)
+    parser.add_argument("--timeframe", default=trade_config.LIVE_TIMEFRAME)
     parser.add_argument(
         "--zero-cost-diagnostic",
         action="store_true",
@@ -543,6 +588,25 @@ def main() -> int:
         result["trades"].to_csv(output_path, index=False)
         print(f"Trade history saved to {output_path.resolve()}")
     return 0
+
+
+def main() -> int:
+    output = io.StringIO()
+    exit_code = 0
+    try:
+        with redirect_stdout(output), redirect_stderr(output):
+            exit_code = _run_main()
+    except SystemExit as error:
+        exit_code = error.code if isinstance(error.code, int) else 1
+    finally:
+        captured = output.getvalue()
+        try:
+            Path("last_backtest_output.txt").write_text(captured, encoding="utf-8")
+        except OSError as error:
+            print(f"Could not save backtest output: {error}", file=sys.stderr)
+        sys.stdout.write(captured)
+        sys.stdout.flush()
+    return exit_code
 
 
 if __name__ == "__main__":

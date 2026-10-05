@@ -38,10 +38,22 @@ def _create_tables(connection: sqlite3.Connection) -> None:
             quantity REAL,
             fill_price REAL,
             reason TEXT NOT NULL,
-            realized_pnl REAL
+            realized_gross_pnl REAL,
+            order_status TEXT
         )
         """
     )
+    columns = {
+        row[1] for row in connection.execute("PRAGMA table_info(orders)").fetchall()
+    }
+    if "realized_gross_pnl" not in columns and "realized_pnl" in columns:
+        connection.execute(
+            "ALTER TABLE orders RENAME COLUMN realized_pnl TO realized_gross_pnl"
+        )
+        columns.remove("realized_pnl")
+        columns.add("realized_gross_pnl")
+    if "order_status" not in columns:
+        connection.execute("ALTER TABLE orders ADD COLUMN order_status TEXT")
 
 
 def _report_failure(error: Exception) -> None:
@@ -128,7 +140,8 @@ def log_order(
     quantity: Optional[float],
     fill_price: Optional[float],
     reason: str,
-    realized_pnl: Optional[float],
+    realized_gross_pnl: Optional[float],
+    order_status: Optional[str],
 ) -> None:
     timestamp = timestamp or datetime.now(timezone.utc).isoformat()
     connection = None
@@ -140,8 +153,8 @@ def log_order(
                 """
                 INSERT INTO orders (
                     timestamp, order_id, symbol, side, requested_notional,
-                    quantity, fill_price, reason, realized_pnl
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    quantity, fill_price, reason, realized_gross_pnl, order_status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     timestamp,
@@ -152,7 +165,8 @@ def log_order(
                     quantity,
                     fill_price,
                     reason,
-                    realized_pnl,
+                    realized_gross_pnl,
+                    order_status,
                 ),
             )
     except Exception as error:

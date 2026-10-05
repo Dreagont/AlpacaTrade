@@ -5,16 +5,17 @@ from alpaca.data.historical import CryptoHistoricalDataClient
 from alpaca.data.requests import CryptoBarsRequest, CryptoLatestTradeRequest
 
 import config
+import trade_config
 from timeframes import parse_timeframe
 
 data_client = CryptoHistoricalDataClient()
 
 
 def get_btc_bars(limit_bars=200):
-    timeframe, minutes_per_bar = parse_timeframe(config.LIVE_TIMEFRAME)
+    timeframe, minutes_per_bar = parse_timeframe(trade_config.LIVE_TIMEFRAME)
     limit_bars = max(
         limit_bars,
-        max(config.FAST_MA, config.SLOW_MA, config.RSI_PERIOD) + 5,
+        max(trade_config.FAST_MA, trade_config.SLOW_MA, trade_config.RSI_PERIOD) + 5,
     )
     now = datetime.now(timezone.utc)
     request = CryptoBarsRequest(
