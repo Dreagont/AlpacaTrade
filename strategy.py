@@ -52,11 +52,11 @@ class StrategySpec:
         return dict(self._parameters())
 
 
-def calculate_indicators(df):
+def _calculate_ma_rsi_indicators(df, fast_ma: int, slow_ma: int, rsi_period: int):
     df = df.copy()
 
-    df["ma_fast"] = df["close"].rolling(trade_config.FAST_MA).mean()
-    df["ma_slow"] = df["close"].rolling(trade_config.SLOW_MA).mean()
+    df["ma_fast"] = df["close"].rolling(fast_ma).mean()
+    df["ma_slow"] = df["close"].rolling(slow_ma).mean()
 
     delta = df["close"].diff()
 
@@ -64,8 +64,8 @@ def calculate_indicators(df):
     loss = -delta.clip(upper=0)
 
     # This is simple moving-average RSI smoothing, not Wilder's standard smoothing.
-    avg_gain = gain.rolling(trade_config.RSI_PERIOD).mean()
-    avg_loss = loss.rolling(trade_config.RSI_PERIOD).mean()
+    avg_gain = gain.rolling(rsi_period).mean()
+    avg_loss = loss.rolling(rsi_period).mean()
 
     rs = avg_gain / avg_loss
 
@@ -74,7 +74,14 @@ def calculate_indicators(df):
     return df
 
 
-def decide_at(df, index):
+def calculate_indicators(df):
+    """Prepare the current live MA/RSI indicators (simple-average RSI)."""
+    return _calculate_ma_rsi_indicators(
+        df, trade_config.FAST_MA, trade_config.SLOW_MA, trade_config.RSI_PERIOD
+    )
+
+
+def _ma_rsi_decide_at(df, index, rsi_buy_threshold: float):
     if index < 1 or index >= len(df):
         return Decision("HOLD", "not_enough_data")
 
@@ -102,7 +109,7 @@ def decide_at(df, index):
     )
 
     if bullish_cross:
-        if row["rsi"] < trade_config.RSI_BUY_THRESHOLD:
+        if row["rsi"] < rsi_buy_threshold:
             return Decision(
                 "BUY",
                 "bullish_ma_crossover_rsi_filter_passed",
@@ -113,6 +120,11 @@ def decide_at(df, index):
         return Decision("SELL", "bearish_ma_crossover")
 
     return Decision("HOLD", "no_crossover")
+
+
+def decide_at(df, index):
+    """Decide using the current live MA/RSI threshold."""
+    return _ma_rsi_decide_at(df, index, trade_config.RSI_BUY_THRESHOLD)
 
 
 def decide(df):
@@ -136,6 +148,49 @@ def _ma_parameters() -> dict[str, Any]:
         "stop_loss_percent": trade_config.STOP_LOSS_PERCENT,
         "take_profit_percent": trade_config.TAKE_PROFIT_PERCENT,
     }
+
+
+def create_ma_rsi_strategy(
+    fast_ma: int,
+    slow_ma: int,
+    rsi_period: int,
+    rsi_buy_threshold: float,
+    stop_loss_percent: float,
+    take_profit_percent: float,
+) -> StrategySpec:
+    """Build an MA/RSI StrategySpec with the existing live decision semantics."""
+    if min(fast_ma, slow_ma, rsi_period) <= 0:
+        raise ValueError("MA periods and RSI period must be positive")
+    if slow_ma <= fast_ma:
+        raise ValueError("slow_ma must be greater than fast_ma")
+    if not 0 <= rsi_buy_threshold <= 100:
+        raise ValueError("RSI buy threshold must be between 0 and 100")
+    if not 0 < stop_loss_percent < 1 or not 0 < take_profit_percent < 1:
+        raise ValueError("Stop-loss and take-profit percentages must be in (0, 1)")
+
+    def parameters() -> dict[str, Any]:
+        return {
+            "fast_ma": fast_ma,
+            "slow_ma": slow_ma,
+            "rsi_period": rsi_period,
+            "rsi_buy_threshold": rsi_buy_threshold,
+            "stop_loss_percent": stop_loss_percent,
+            "take_profit_percent": take_profit_percent,
+        }
+
+    return StrategySpec(
+        name="ma_rsi_crossover",
+        _prepare_indicators=lambda df: _calculate_ma_rsi_indicators(
+            df, fast_ma, slow_ma, rsi_period
+        ),
+        _decide_at=lambda df, index: _ma_rsi_decide_at(
+            df, index, rsi_buy_threshold
+        ),
+        _warmup_lookback=lambda: max(fast_ma, slow_ma, rsi_period),
+        _parameters=parameters,
+        _stop_loss=lambda: stop_loss_percent,
+        _take_profit=lambda: take_profit_percent,
+    )
 
 
 MA_RSI_CROSSOVER = StrategySpec(

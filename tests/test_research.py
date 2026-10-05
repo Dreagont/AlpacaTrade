@@ -181,7 +181,7 @@ class ResearchTests(unittest.TestCase):
         self.assertEqual(fetch_mock.call_count, len(timeframes))
         for call, timeframe in zip(fetch_mock.call_args_list, timeframes):
             self.assertEqual(call.args, (max(lookbacks), timeframe))
-            self.assertEqual(call.kwargs["warmup_bars"], max_warmup)
+            self.assertEqual(call.kwargs["warmup_bars"], max_warmup + 20)
             self.assertEqual(call.kwargs["end_time"], aligned)
 
         self.assertEqual(run_mock.call_count, len(expected_pairs) * 2)
@@ -299,6 +299,56 @@ class ResearchTests(unittest.TestCase):
         self.assertEqual(rows[0]["error"], "")
         self.assertIn("Insufficient warm-up history", rows[1]["error"])
         self.assertEqual(run_mock.call_count, 2)  # both cost modes for 90d only
+
+    def test_fetch_buffer_tolerates_missing_candles_but_enforces_required_warmup(self):
+        aligned = datetime(2026, 10, 5, 0, tzinfo=timezone.utc)
+        required = required_warmup_bars(strategy=MA_RSI_CROSSOVER)
+        requested_warmup = required + 20
+
+        def fetch_with_missing_candles(days, timeframe, *, warmup_bars, end_time):
+            self.assertEqual((days, timeframe), (2, "1Hour"))
+            self.assertEqual(warmup_bars, requested_warmup)
+            return history_frame(
+                end_time, days, warmup_bars=warmup_bars - 3
+            )
+
+        def run_success(_bars, **kwargs):
+            return backtest_result(kwargs["test_start"], aligned)
+
+        with (
+            patch("research.backtest.fetch_history", side_effect=fetch_with_missing_candles),
+            patch("research.backtest.run_backtest", side_effect=run_success),
+            redirect_stdout(io.StringIO()),
+        ):
+            rows = research.run_research(
+                lookbacks=[2],
+                timeframes=["1Hour"],
+                strategies=["ma_rsi_crossover"],
+                output=None,
+                research_end_time=aligned,
+            )
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["error"], "")
+        self.assertGreaterEqual(rows[0]["warmup_bars"], required)
+
+        # A fetch that returns fewer than the strategy truly requires still fails.
+        insufficient = history_frame(aligned, 2, warmup_bars=required - 1)
+        with (
+            patch("research.backtest.fetch_history", return_value=insufficient),
+            patch("research.backtest.run_backtest") as run_mock,
+            redirect_stdout(io.StringIO()),
+        ):
+            rows = research.run_research(
+                lookbacks=[2],
+                timeframes=["1Hour"],
+                strategies=["ma_rsi_crossover"],
+                output=None,
+                research_end_time=aligned,
+            )
+
+        self.assertIn("Insufficient warm-up history", rows[0]["error"])
+        run_mock.assert_not_called()
 
     def test_one_timeframe_fetch_failure_does_not_stop_other_rows(self):
         aligned = self.end

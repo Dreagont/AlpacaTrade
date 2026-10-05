@@ -403,7 +403,7 @@ def run_research(
             history_by_timeframe[timeframe] = backtest.fetch_history(
                 largest_lookback,
                 timeframe,
-                warmup_bars=max_strategy_warmup,
+                warmup_bars=max_strategy_warmup + 20,
                 end_time=aligned_research_end,
             )
         except Exception as error:
