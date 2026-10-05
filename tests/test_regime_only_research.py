@@ -62,7 +62,10 @@ class RegimeOnlyStrategyTests(unittest.TestCase):
             pd.testing.assert_series_equal(
                 regime_prepared[column], filtered_prepared[column]
             )
-        self.assertNotIn("regime_only_4h", strategy_module.STRATEGY_REGISTRY)
+        self.assertIs(
+            strategy_module.STRATEGY_REGISTRY["regime_only_4h"],
+            strategy_module.REGIME_ONLY_4H,
+        )
         self.assertEqual(self.strategy.stop_loss_percent, None)
         self.assertEqual(self.strategy.take_profit_percent, None)
         self.assertEqual(self.strategy.max_holding_minutes, None)

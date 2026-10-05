@@ -998,6 +998,136 @@ class SubmissionIntentRecoveryTests(unittest.TestCase):
 
 
 class LiveStrategyAndProtectionTests(unittest.TestCase):
+    def _run_until_first_sleep(self, live_strategy, timeframe, active_position, position):
+        state = broker.PositionLookup(
+            broker.PositionLookupStatus.CONFIRMED_POSITION, position
+        )
+        output = io.StringIO()
+        with (
+            patch.object(trade_config, "LIVE_STRATEGY", live_strategy),
+            patch.object(trade_config, "LIVE_TIMEFRAME", timeframe),
+            patch.object(main, "init_db", return_value=True),
+            patch.object(main.client, "get_account", return_value=SimpleNamespace()),
+            patch("database.get_active_bot_position", return_value=active_position),
+            patch("database.get_state", return_value=None),
+            patch("database.set_state"),
+            patch("database.set_active_bot_position") as save_active,
+            patch.object(main, "restore_pending_orders") as restore,
+            patch.object(main, "reconcile_pending_orders"),
+            patch.object(main, "lookup_btc_position", return_value=state),
+            patch.object(main, "get_btc_market_price", return_value=None),
+            patch.object(main, "get_btc_bars", return_value=None),
+            patch.object(main.time, "sleep", side_effect=KeyboardInterrupt),
+            redirect_stdout(output),
+        ):
+            try:
+                main.run()
+            except KeyboardInterrupt:
+                pass
+        return output.getvalue(), restore, save_active
+
+    def test_startup_safe_halts_for_ma_position_when_regime_strategy_selected(self):
+        active = {
+            "asset_id": "btc-asset", "credited_quantity": 0.004,
+            "source_confirmed": True, "strategy_name": "ma_rsi_crossover",
+        }
+        state = broker.PositionLookup(
+            broker.PositionLookupStatus.CONFIRMED_POSITION, make_position()
+        )
+        output = io.StringIO()
+        with (
+            patch.object(trade_config, "LIVE_STRATEGY", "regime_only_4h"),
+            patch.object(trade_config, "LIVE_TIMEFRAME", "4Hour"),
+            patch.object(main, "init_db", return_value=True),
+            patch.object(main.client, "get_account", return_value=SimpleNamespace()),
+            patch("database.get_active_bot_position", return_value=active),
+            patch.object(main, "lookup_btc_position", return_value=state),
+            patch.object(main, "restore_pending_orders") as restore,
+            patch.object(main, "buy_btc") as buy,
+            patch.object(main, "sell_btc") as sell,
+            redirect_stdout(output),
+        ):
+            main.run()
+        restore.assert_not_called()
+        buy.assert_not_called()
+        sell.assert_not_called()
+        self.assertIn("SAFE-HALT STRATEGY MISMATCH", output.getvalue())
+
+    def test_startup_safe_halts_for_regime_position_when_ma_strategy_selected(self):
+        active = {
+            "asset_id": "btc-asset", "credited_quantity": 0.004,
+            "source_confirmed": True, "strategy_name": "regime_only_4h",
+        }
+        state = broker.PositionLookup(
+            broker.PositionLookupStatus.CONFIRMED_POSITION, make_position()
+        )
+        output = io.StringIO()
+        with (
+            patch.object(trade_config, "LIVE_STRATEGY", "ma_rsi_crossover"),
+            patch.object(trade_config, "LIVE_TIMEFRAME", "5Min"),
+            patch.object(main, "init_db", return_value=True),
+            patch.object(main.client, "get_account", return_value=SimpleNamespace()),
+            patch("database.get_active_bot_position", return_value=active),
+            patch.object(main, "lookup_btc_position", return_value=state),
+            patch.object(main, "restore_pending_orders") as restore,
+            patch.object(main, "buy_btc") as buy,
+            patch.object(main, "sell_btc") as sell,
+            redirect_stdout(output),
+        ):
+            main.run()
+        restore.assert_not_called()
+        buy.assert_not_called()
+        sell.assert_not_called()
+        self.assertIn("SAFE-HALT STRATEGY MISMATCH", output.getvalue())
+
+    def test_matching_active_strategy_provenance_starts_normally(self):
+        active = {
+            "asset_id": "btc-asset", "credited_quantity": 0.004,
+            "source_confirmed": True, "strategy_name": "ma_rsi_crossover",
+        }
+        output, restore, _save_active = self._run_until_first_sleep(
+            "ma_rsi_crossover", "5Min", active, make_position()
+        )
+        restore.assert_called_once()
+        self.assertIn("PAPER BOT STARTED", output)
+        self.assertNotIn("SAFE-HALT STRATEGY MISMATCH", output)
+
+    def test_flat_account_clears_stale_mismatched_provenance_and_starts(self):
+        active = {
+            "asset_id": "btc-asset", "credited_quantity": 0.004,
+            "source_confirmed": True, "strategy_name": "ma_rsi_crossover",
+        }
+        output, restore, save_active = self._run_until_first_sleep(
+            "regime_only_4h", "4Hour", active, None
+        )
+        restore.assert_called_once()
+        save_active.assert_called_once_with(None)
+        self.assertIn("PAPER BOT STARTED", output)
+        self.assertNotIn("SAFE-HALT STRATEGY MISMATCH", output)
+
+    def test_persisted_regime_order_restores_with_registered_regime_strategy(self):
+        import strategy
+
+        persisted = main._context_from_record({
+            "side": "BUY", "reason": "regime_on", "requested_notional": 20,
+            "order_id": "pending-regime-buy", "client_order_id": "regime-buy-client",
+            "strategy_name": "regime_only_4h", "strategy_parameters_json": "{}",
+            "submission_kind": "broker_order", "created_at": "2026-10-05T00:00:00Z",
+            "position_before_quantity": 0, "order_role": "strategy_entry",
+        })
+        with (
+            patch.object(trade_config, "LIVE_STRATEGY", "ma_rsi_crossover"),
+            patch.object(main, "reconcile_order", return_value=make_order(
+                "pending-regime-buy", status="canceled", client_order_id="regime-buy-client"
+            )),
+            patch.object(main, "_safe_record_order") as record,
+        ):
+            main.reconcile_pending_orders(
+                {"pending-regime-buy": persisted}, main._live_strategy()
+            )
+        self.assertIs(record.call_args.kwargs["strategy"], strategy.REGIME_ONLY_4H)
+        self.assertIs(strategy.get_strategy("regime_only_4h"), strategy.REGIME_ONLY_4H)
+
     def test_default_live_strategy_timeframe_and_ma_behavior_are_preserved(self):
         selected = main._live_strategy()
         self.assertEqual(trade_config.LIVE_STRATEGY, "ma_rsi_crossover")

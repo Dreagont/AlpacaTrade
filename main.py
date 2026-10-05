@@ -259,6 +259,24 @@ def _load_runtime_provenance(runtime):
         _mark_accounting_degraded(runtime, f"active BTC provenance unavailable: {error}")
 
 
+def _active_position_strategy_mismatch(runtime, strategy):
+    active = runtime.active_position if runtime is not None else None
+    persisted_strategy = active.get("strategy_name") if active else None
+    return bool(persisted_strategy and persisted_strategy != strategy.name)
+
+
+def _safe_halt_on_strategy_mismatch(position, runtime, strategy):
+    if position is None or not _active_position_strategy_mismatch(runtime, strategy):
+        return False
+    persisted_strategy = runtime.active_position["strategy_name"]
+    print(
+        "SAFE-HALT STRATEGY MISMATCH: active BTC position belongs to "
+        f"{persisted_strategy}, but live strategy is {strategy.name}; "
+        "position will not be managed, closed, or migrated automatically."
+    )
+    return True
+
+
 def _record_evaluation(bars, market_price, position, action, reason, strategy=None):
     strategy = strategy or _live_strategy()
     indicators = None
@@ -1733,6 +1751,15 @@ def run():
     pending_reconciliations = {}
     try:
         _load_runtime_provenance(runtime)
+        if _active_position_strategy_mismatch(runtime, strategy):
+            preflight_state = lookup_btc_position()
+            if preflight_state.status == PositionLookupStatus.POSITION_STATE_UNKNOWN:
+                print(f"SAFE-HALT BROKER POSITION STATE UNKNOWN: {preflight_state.error}")
+                return
+            if _safe_halt_on_strategy_mismatch(
+                preflight_state.position, runtime, strategy
+            ):
+                return
         try:
             restore_pending_orders(pending_reconciliations, strategy, runtime=runtime)
         except Exception as error:
@@ -1746,6 +1773,8 @@ def run():
             print(f"SAFE-HALT BROKER POSITION STATE UNKNOWN: {state.error}")
             return
         position = state.position
+        if _safe_halt_on_strategy_mismatch(position, runtime, strategy):
+            return
         owned, ownership_reason = bot_owns_position(position, runtime)
         stale_owned_quantity = (
             _proven_bot_quantity_for_stale_position(position, runtime) if not owned else None
@@ -1784,6 +1813,16 @@ def run():
             if runtime.accounting_degraded:
                 if runtime.active_position is None:
                     _load_runtime_provenance(runtime)
+            if _active_position_strategy_mismatch(runtime, strategy):
+                preflight_state = lookup_btc_position()
+                if preflight_state.status == PositionLookupStatus.POSITION_STATE_UNKNOWN:
+                    print(f"SAFE-HALT BROKER POSITION STATE UNKNOWN: {preflight_state.error}")
+                    return
+                if _safe_halt_on_strategy_mismatch(
+                    preflight_state.position, runtime, strategy
+                ):
+                    return
+            if runtime.accounting_degraded:
                 try:
                     restore_pending_orders(pending_reconciliations, strategy, runtime=runtime)
                 except Exception as error:
@@ -1795,6 +1834,8 @@ def run():
                 time.sleep(trade_config.CHECK_INTERVAL_SECONDS)
                 continue
             position = state.position
+            if _safe_halt_on_strategy_mismatch(position, runtime, strategy):
+                return
             owned, ownership_reason = bot_owns_position(position, runtime)
             stale_owned_quantity = (
                 _proven_bot_quantity_for_stale_position(position, runtime) if not owned else None
