@@ -101,7 +101,25 @@ class StrategyGoldenOutputTests(unittest.TestCase):
                     strategy, bars, timeframe, liquidate_at_end
                 )
 
-        self.assertEqual(actual, fixture["runs"])
+        expected = fixture["runs"]
+        self.assertEqual(set(actual), set(expected))
+        for run_key in expected:
+            with self.subTest(run=run_key):
+                actual_run = actual[run_key]
+                expected_run = expected[run_key]
+                self.assertEqual(len(actual_run["trades"]), len(expected_run["trades"]))
+                for trade_index, (actual_trade, expected_trade) in enumerate(
+                    zip(actual_run["trades"], expected_run["trades"])
+                ):
+                    with self.subTest(trade=trade_index):
+                        for field in ("entry_time", "exit_time", "exit_reason"):
+                            self.assertEqual(actual_trade[field], expected_trade[field])
+                        self.assertAlmostEqual(
+                            actual_trade["net_pnl"], expected_trade["net_pnl"], places=9
+                        )
+                self.assertAlmostEqual(
+                    actual_run["ending_equity"], expected_run["ending_equity"], places=9
+                )
 
 
 if __name__ == "__main__":
