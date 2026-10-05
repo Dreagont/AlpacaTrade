@@ -1,6 +1,7 @@
 """Manual paper-only position lookup/close diagnostic; never runs automatically."""
 
 import argparse
+import math
 import time
 from datetime import datetime, timezone
 
@@ -17,6 +18,45 @@ from broker import (
     sell_btc,
     wait_for_order_fill,
 )
+
+
+def _validate_position_quantity(filled_quantity, position_quantity):
+    """Validate a smoke BUY position while allowing plausible crypto-asset fees."""
+    try:
+        filled_quantity = float(filled_quantity)
+        position_quantity = float(position_quantity)
+        max_fee_rate = float(trade_config.PAPER_SMOKE_MAX_BUY_FEE_RATE)
+    except (TypeError, ValueError) as error:
+        raise RuntimeError("ABORT: BUY/position quantity or fee limit is invalid") from error
+
+    if not math.isfinite(filled_quantity) or filled_quantity <= 0:
+        raise RuntimeError("ABORT: smoke BUY has no valid positive filled quantity")
+    if not math.isfinite(position_quantity) or position_quantity <= 0:
+        raise RuntimeError(
+            "ABORT: account BTC quantity is not positive; position will not be closed"
+        )
+    if not math.isfinite(max_fee_rate) or not 0 <= max_fee_rate < 1:
+        raise RuntimeError("ABORT: PAPER_SMOKE_MAX_BUY_FEE_RATE must be in [0, 1)")
+
+    quantity_tolerance = max(1e-12, filled_quantity * 1e-9)
+    if position_quantity > filled_quantity + quantity_tolerance:
+        raise RuntimeError(
+            "ABORT: account BTC quantity exceeds this smoke BUY fill beyond numeric "
+            "tolerance; possible pre-existing/manual BTC exposure, position will not be closed"
+        )
+
+    inferred_buy_fee_rate = 1 - (position_quantity / filled_quantity)
+    fee_numeric_tolerance = quantity_tolerance / filled_quantity
+    if (
+        inferred_buy_fee_rate < -fee_numeric_tolerance
+        or inferred_buy_fee_rate > max_fee_rate
+    ):
+        raise RuntimeError(
+            f"ABORT: inferred BUY fee {inferred_buy_fee_rate:.4%} is outside the "
+            f"allowed range (maximum {max_fee_rate:.2%}); position will not be closed"
+        )
+    # A tiny negative fee can result from accepted floating-point quantity noise.
+    return max(0.0, inferred_buy_fee_rate)
 
 
 def _wait_for_position(timeout_seconds=30, interval_seconds=1):
@@ -102,17 +142,17 @@ def _execute_diagnostic(amount_usd):
         raise RuntimeError("ABORT: filled BUY has not appeared in account positions")
     if not broker.btc_symbol_matches(getattr(position, "symbol", None)):
         raise RuntimeError("ABORT: broker position identity is not BTC/USD")
-    position_quantity = abs(float(position.qty))
-    tolerance = max(1e-8, filled_quantity * 1e-5)
-    if abs(position_quantity - filled_quantity) > tolerance:
-        raise RuntimeError(
-            "ABORT: account BTC quantity does not match this smoke-test fill; "
-            "position will not be closed"
-        )
+    position_quantity = float(position.qty)
+    inferred_buy_fee_rate = _validate_position_quantity(
+        filled_quantity, position_quantity
+    )
     print(
-        f"3/6 BTC position confirmed: symbol={position.symbol} "
-        f"asset_id={getattr(position, 'asset_id', None)} qty={position_quantity:g} "
-        f"market_value={getattr(position, 'market_value', None)}"
+        "3/6 BTC position confirmed:\n"
+        f"    symbol={position.symbol} asset_id={getattr(position, 'asset_id', None)}\n"
+        f"    filled_qty={filled_quantity:.12g}\n"
+        f"    position_qty={position_quantity:.12g}\n"
+        f"    inferred_buy_fee={inferred_buy_fee_rate:.4%}\n"
+        f"    market_value={getattr(position, 'market_value', None)}"
     )
 
     print("4/6 Closing only the validated smoke-test BTC position")

@@ -421,6 +421,11 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
         with (
             patch.object(paper_position_smoke_test.broker, "is_paper_client") as is_paper,
             patch.object(paper_position_smoke_test.broker.client, "get_account") as account,
+            patch.object(paper_position_smoke_test.broker, "lookup_btc_position") as lookup,
+            patch.object(paper_position_smoke_test, "get_open_btc_orders") as orders,
+            patch.object(
+                paper_position_smoke_test.broker, "get_order_by_client_order_id"
+            ) as lookup_order,
             patch.object(paper_position_smoke_test.broker, "buy_btc") as buy,
             patch.object(paper_position_smoke_test.broker, "sell_btc") as sell,
             redirect_stdout(io.StringIO()) as output,
@@ -428,6 +433,9 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
             self.assertEqual(paper_position_smoke_test.main([]), 0)
         is_paper.assert_not_called()
         account.assert_not_called()
+        lookup.assert_not_called()
+        orders.assert_not_called()
+        lookup_order.assert_not_called()
         buy.assert_not_called()
         sell.assert_not_called()
         self.assertIn("DRY RUN", output.getvalue())
