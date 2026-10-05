@@ -93,7 +93,8 @@ def _trade_row(
 ) -> dict[str, Any]:
     gross_pnl = (exit_market_price - position.entry_market_price) * position.quantity
     # BUY fees are withheld in BTC and valued at the entry market price; SELL fees are USD.
-    fees = position.buy_fee_quantity * position.entry_market_price + exit_fee
+    entry_fee = position.buy_fee_quantity * position.entry_market_price
+    fees = entry_fee + exit_fee
     slippage_cost = position.entry_slippage_cost + exit_slippage_cost
     net_pnl = gross_pnl - fees - slippage_cost
     cash_flow_net_pnl = exit_price * position.quantity - exit_fee - position.requested_notional
@@ -109,15 +110,39 @@ def _trade_row(
     return {
         "entry_time": position.entry_time,
         "entry_price": position.entry_price,
+        "entry_fill_price": position.entry_price,
+        "entry_market_price": position.entry_market_price,
         "exit_time": exit_time,
         "exit_price": exit_price,
+        "exit_fill_price": exit_price,
+        "exit_market_price": exit_market_price,
+        "requested_notional": position.requested_notional,
+        "gross_quantity_before_fee": position.gross_quantity,
+        "quantity_after_buy_fee": position.quantity,
+        # quantity remains as a compatibility alias for historical consumers.
         "quantity": position.quantity,
         "entry_reason": position.entry_reason,
         "exit_reason": exit_reason,
         "gross_pnl": gross_pnl,
+        "entry_fee": entry_fee,
+        "exit_fee": exit_fee,
         "fees": fees,
+        "entry_slippage_cost": position.entry_slippage_cost,
+        "exit_slippage_cost": exit_slippage_cost,
         "slippage_cost": slippage_cost,
         "net_pnl": net_pnl,
+        "same_path_zero_cost_quantity": (
+            position.requested_notional / position.entry_market_price
+            if position.entry_market_price
+            else 0.0
+        ),
+        "same_path_zero_cost_pnl": (
+            position.requested_notional
+            / position.entry_market_price
+            * (exit_market_price - position.entry_market_price)
+            if position.entry_market_price
+            else 0.0
+        ),
         "gross_return_percent": gross_return,
         "return_percent": net_pnl / invested * 100 if invested else None,
         "holding_duration_minutes": duration_minutes,
@@ -168,6 +193,7 @@ def run_backtest(
     equity_values = [cash]
     invested_bar_count = 0
     capital_exposures: list[float] = []
+    exposure_samples: list[dict[str, Any]] = []
 
     def close_position(base_exit_price: float, timestamp: Any, reason: str) -> None:
         nonlocal cash, position
@@ -256,9 +282,24 @@ def run_backtest(
             invested_bar_count += 1
             open_value = position.quantity * open_price
             open_equity = cash + open_value
-            capital_exposures.append(open_value / open_equity * 100 if open_equity else 0)
+            exposure_percent = open_value / open_equity * 100 if open_equity else 0.0
+            capital_exposures.append(exposure_percent)
+            exposure_samples.append(
+                {
+                    "time_invested": True,
+                    "capital_exposure_percent": exposure_percent,
+                    "capital_exposure_value": open_value,
+                }
+            )
         else:
             capital_exposures.append(0.0)
+            exposure_samples.append(
+                {
+                    "time_invested": False,
+                    "capital_exposure_percent": 0.0,
+                    "capital_exposure_value": 0.0,
+                }
+            )
 
         if position is not None and not exited_at_open:
             stop_price = (
@@ -362,6 +403,10 @@ def run_backtest(
 
     ending_capital = cash
     strategy_return = (ending_capital / starting_capital - 1) * 100
+    same_path_zero_cost_pnl_total = sum(
+        trade["same_path_zero_cost_pnl"] for trade in completed_trades
+    )
+    same_path_zero_cost_return = same_path_zero_cost_pnl_total / starting_capital * 100
     full_buy_hold_return = (full_buy_hold_ending / starting_capital - 1) * 100
     same_notional_return = (same_notional_ending / starting_capital - 1) * 100
     raw_market_return = (last_close / first_open - 1) * 100 if first_open else None
@@ -370,18 +415,40 @@ def run_backtest(
         columns=[
             "entry_time",
             "entry_price",
+            "entry_fill_price",
+            "entry_market_price",
             "exit_time",
             "exit_price",
+            "exit_fill_price",
+            "exit_market_price",
+            "requested_notional",
+            "gross_quantity_before_fee",
+            "quantity_after_buy_fee",
             "quantity",
             "entry_reason",
             "exit_reason",
             "gross_pnl",
+            "entry_fee",
+            "exit_fee",
             "fees",
+            "entry_slippage_cost",
+            "exit_slippage_cost",
             "slippage_cost",
             "net_pnl",
+            "same_path_zero_cost_quantity",
+            "same_path_zero_cost_pnl",
             "gross_return_percent",
             "return_percent",
             "holding_duration_minutes",
+        ],
+    )
+    exposure_curve = pd.DataFrame(
+        exposure_samples,
+        index=pd.DatetimeIndex(test_bars.index),
+        columns=[
+            "time_invested",
+            "capital_exposure_percent",
+            "capital_exposure_value",
         ],
     )
     durations = [trade["holding_duration_minutes"] for trade in completed_trades]
@@ -405,6 +472,9 @@ def run_backtest(
         "ending_capital": ending_capital,
         "net_profit": ending_capital - starting_capital,
         "strategy_return": strategy_return,
+        "same_path_zero_cost_pnl_total": same_path_zero_cost_pnl_total,
+        "same_path_zero_cost_return_percent": same_path_zero_cost_return,
+        "pure_cost_drag_percent": same_path_zero_cost_return - strategy_return,
         "trades": trades_frame,
         "total_trades": len(completed_trades),
         "winning_trades": len(winning_trades),
@@ -434,6 +504,7 @@ def run_backtest(
         "max_drawdown": max_drawdown,
         "daily_sharpe": float(daily_sharpe) if daily_sharpe is not None else None,
         "equity_curve": equity_curve,
+        "exposure_curve": exposure_curve,
         "full_buy_hold_ending": full_buy_hold_ending,
         "full_buy_hold_return": full_buy_hold_return,
         "same_notional_ending": same_notional_ending,

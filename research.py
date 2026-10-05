@@ -35,9 +35,11 @@ METRICS = (
     "total_costs",
     "net_pnl",
     "net_return_percent",
-    "zero_cost_return_percent",
+    "same_path_zero_cost_pnl_total",
+    "same_path_zero_cost_return_percent",
+    "pure_cost_drag_percent",
+    "free_run_zero_cost_return_percent",
     "realistic_net_return_percent",
-    "cost_drag_percent",
     "average_pnl_per_trade",
     "average_gross_return_per_trade",
     "average_net_return_per_trade",
@@ -190,7 +192,8 @@ def _research_row(
     duration_days = coverage["coverage_days"]
     gross_pnl = realistic_result["gross_pnl"]
     realistic_return = realistic_result["strategy_return"]
-    zero_cost_return = zero_cost_result["strategy_return"]
+    same_path_zero_cost_return = realistic_result["same_path_zero_cost_return_percent"]
+    pure_cost_drag = realistic_result["pure_cost_drag_percent"]
     net_profit_factor = realistic_result.get(
         "net_profit_factor", realistic_result.get("profit_factor")
     )
@@ -228,9 +231,13 @@ def _research_row(
         "total_costs": realistic_result["total_costs"],
         "net_pnl": realistic_result["net_profit"],
         "net_return_percent": realistic_return,
-        "zero_cost_return_percent": zero_cost_return,
+        "same_path_zero_cost_pnl_total": realistic_result[
+            "same_path_zero_cost_pnl_total"
+        ],
+        "same_path_zero_cost_return_percent": same_path_zero_cost_return,
+        "pure_cost_drag_percent": pure_cost_drag,
+        "free_run_zero_cost_return_percent": zero_cost_result["strategy_return"],
         "realistic_net_return_percent": realistic_return,
-        "cost_drag_percent": zero_cost_return - realistic_return,
         "average_pnl_per_trade": realistic_result["average_pnl_per_trade"],
         "average_gross_return_per_trade": realistic_result["average_gross_return"],
         "average_net_return_per_trade": realistic_result["average_net_return"],
@@ -514,8 +521,12 @@ def _print_report(
         "recency analysis, not independent-regime conclusions."
     )
     print(
-        "Window  TF      Strategy              Trades  Trades/day  ZeroCost% "
-        " Net%    Drag%  NetPF   Win%   Costs  MaxDD%     BTC%"
+        "SamePath0% removes costs from realistic trades without rerunning signals; "
+        "FreeRun0% reruns the strategy with zero costs and can follow a different path."
+    )
+    print(
+        "Window  TF      Strategy              Trades  Trades/day  SamePath0% "
+        " Net%    Drag%  FreeRun0% NetPF   Win%   Costs  MaxDD%     BTC%"
     )
     for row in rows:
         window = f"{row['lookback_days']}d"
@@ -528,9 +539,10 @@ def _print_report(
         print(
             f"{window:<7} {row['timeframe']:<7} {row['strategy_name']:<21} "
             f"{row['total_trades']:>6} {_fmt(row['trades_per_day']):>11} "
-            f"{_fmt(row['zero_cost_return_percent']):>10} "
+            f"{_fmt(row['same_path_zero_cost_return_percent']):>11} "
             f"{_fmt(row['realistic_net_return_percent']):>7} "
-            f"{_fmt(row['cost_drag_percent']):>7} "
+            f"{_fmt(row['pure_cost_drag_percent']):>7} "
+            f"{_fmt(row['free_run_zero_cost_return_percent']):>9} "
             f"{_fmt(row['net_profit_factor']):>6} "
             f"{_fmt(row['win_rate']):>6} ${_fmt(row['total_costs']):>7} "
             f"{_fmt(row['max_drawdown']):>7} "

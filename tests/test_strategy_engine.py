@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -69,6 +70,93 @@ def profit_factor_test_strategy():
 
 
 class StrategyEngineTests(unittest.TestCase):
+    def test_same_path_zero_cost_drag_uses_realistic_trade_path_and_market_prices(self):
+        index = pd.date_range("2026-01-01", periods=5, freq="1h", tz="UTC")
+        bars = pd.DataFrame(
+            {
+                "open": [100.0, 100.0, 104.0, 106.0, 108.0],
+                "high": [101.0, 104.0, 106.0, 108.0, 109.0],
+                "low": [99.0, 99.0, 103.0, 105.0, 107.0],
+                "close": [100.0, 103.0, 105.0, 107.0, 108.0],
+                "volume": [1.0] * 5,
+            },
+            index=index,
+        )
+        fixed_target = StrategySpec(
+            name="fixed_target_fixture",
+            _prepare_indicators=lambda frame: frame.copy(),
+            _decide_at=lambda _frame, decision_index: (
+                Decision("BUY", "fixture_buy")
+                if decision_index == 0
+                else Decision("HOLD", "fixture_hold")
+            ),
+            _warmup_lookback=lambda: 0,
+            _parameters=lambda: {"take_profit_percent": 0.05},
+            _stop_loss=lambda: None,
+            _take_profit=lambda: 0.05,
+        )
+
+        with (
+            patch("trade_config.TRADE_AMOUNT_USD", 100.0),
+            patch("trade_config.MAX_POSITION_USD", 100.0),
+        ):
+            realistic = run_backtest(
+                bars,
+                starting_capital=1000.0,
+                timeframe="1Hour",
+                fee_rate=0.01,
+                slippage=0.02,
+                strategy=fixed_target,
+            )
+            free_run = run_backtest(
+                bars,
+                starting_capital=1000.0,
+                timeframe="1Hour",
+                fee_rate=0.0,
+                slippage=0.0,
+                strategy=fixed_target,
+            )
+
+        realistic_trade = realistic["trades"].iloc[0]
+        free_trade = free_run["trades"].iloc[0]
+        self.assertEqual(realistic_trade["entry_time"], free_trade["entry_time"])
+        self.assertNotEqual(realistic_trade["exit_time"], free_trade["exit_time"])
+        self.assertEqual(realistic_trade["exit_time"], index[3])
+        self.assertEqual(free_trade["exit_time"], index[2])
+
+        expected_quantity = (
+            realistic_trade["requested_notional"]
+            / realistic_trade["entry_market_price"]
+        )
+        expected_pnl = expected_quantity * (
+            realistic_trade["exit_market_price"]
+            - realistic_trade["entry_market_price"]
+        )
+        self.assertAlmostEqual(
+            realistic_trade["same_path_zero_cost_quantity"], expected_quantity
+        )
+        self.assertAlmostEqual(
+            realistic_trade["same_path_zero_cost_pnl"], expected_pnl
+        )
+        self.assertAlmostEqual(
+            realistic_trade["gross_quantity_before_fee"],
+            realistic_trade["requested_notional"]
+            / realistic_trade["entry_fill_price"],
+        )
+        self.assertAlmostEqual(
+            realistic_trade["quantity_after_buy_fee"],
+            realistic_trade["gross_quantity_before_fee"] * (1 - 0.01),
+        )
+        self.assertAlmostEqual(realistic["same_path_zero_cost_pnl_total"], expected_pnl)
+        self.assertAlmostEqual(
+            realistic["same_path_zero_cost_return_percent"], expected_pnl / 1000 * 100
+        )
+        self.assertAlmostEqual(
+            realistic["pure_cost_drag_percent"],
+            realistic["same_path_zero_cost_return_percent"]
+            - realistic["strategy_return"],
+        )
+
     def test_donchian_entry_channel_excludes_current_candle_high(self):
         index = pd.date_range("2026-01-01", periods=21, freq="1h", tz="UTC")
         bars = pd.DataFrame(

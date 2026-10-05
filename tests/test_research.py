@@ -56,6 +56,9 @@ def backtest_result(start, end, *, strategy_return=4.6):
         "total_costs": 4.0,
         "net_profit": strategy_return,
         "strategy_return": strategy_return,
+        "same_path_zero_cost_pnl_total": strategy_return + 2.5,
+        "same_path_zero_cost_return_percent": strategy_return + 2.5,
+        "pure_cost_drag_percent": 2.5,
         "average_pnl_per_trade": 11.5,
         "average_gross_return": 2.0,
         "average_net_return": 1.8,
@@ -202,9 +205,10 @@ class ResearchTests(unittest.TestCase):
         self.assertTrue(all(row["actual_start_time"] for row in rows))
         self.assertTrue(all(row["actual_end_time"] == aligned.isoformat() for row in rows))
         self.assertTrue(all(row["coverage_days"] > 0 for row in rows))
-        self.assertTrue(all(row["zero_cost_return_percent"] == 7.0 for row in rows))
+        self.assertTrue(all(row["same_path_zero_cost_return_percent"] == 7.0 for row in rows))
         self.assertTrue(all(row["realistic_net_return_percent"] == 4.5 for row in rows))
-        self.assertTrue(all(row["cost_drag_percent"] == 2.5 for row in rows))
+        self.assertTrue(all(row["pure_cost_drag_percent"] == 2.5 for row in rows))
+        self.assertTrue(all(row["free_run_zero_cost_return_percent"] == 7.0 for row in rows))
         self.assertTrue(all(row["raw_market_return_percent"] == 12.0 for row in rows))
         self.assertTrue(all(row["fee_rate"] == config.BACKTEST_FEE_PERCENT for row in rows))
         self.assertTrue(all(row["slippage_rate"] == config.BACKTEST_SLIPPAGE_PERCENT for row in rows))
@@ -402,12 +406,13 @@ class ResearchTests(unittest.TestCase):
         self.assertEqual(len(calls), 2)
         self.assertIs(calls[0]["strategy"], calls[1]["strategy"])
         self.assertEqual(calls[0]["test_start"], calls[1]["test_start"])
-        self.assertEqual(row["zero_cost_return_percent"], 8.0)
+        self.assertEqual(row["same_path_zero_cost_return_percent"], 7.5)
+        self.assertEqual(row["free_run_zero_cost_return_percent"], 8.0)
         self.assertEqual(row["realistic_net_return_percent"], 5.0)
         self.assertGreaterEqual(
-            row["zero_cost_return_percent"], row["realistic_net_return_percent"]
+            row["same_path_zero_cost_return_percent"], row["realistic_net_return_percent"]
         )
-        self.assertEqual(row["cost_drag_percent"], 3.0)
+        self.assertEqual(row["pure_cost_drag_percent"], 2.5)
         self.assertEqual(row["net_profit_factor"], 1.7)
         self.assertEqual(row["profit_factor"], 1.7)
 
