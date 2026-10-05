@@ -614,19 +614,10 @@ def _submit_and_log_buy(
         try:
             order = buy_btc(amount, client_order_id=client_order_id)
         except Exception as error:
-            failure_kind = classify_submission_exception(error)
-            if failure_kind == SubmissionFailureKind.RATE_LIMITED:
-                return _record_rate_limited(
-                    side="BUY", reason=reason, requested_notional=amount,
-                    client_order_id=client_order_id, strategy=strategy,
-                    runtime=runtime, order_role=order_role,
-                )
-            if failure_kind == SubmissionFailureKind.DEFINITIVE_REJECTION:
-                return _record_definitive_rejection(
-                    side="BUY", reason=reason, requested_notional=amount,
-                    client_order_id=client_order_id, strategy=strategy,
-                    runtime=runtime, order_role=order_role,
-                )
+            # The SDK may retry a POST internally. A later 422/429 response can
+            # therefore follow an earlier accepted request; always reconcile
+            # the deterministic client ID before treating the exception as a
+            # rejection or rate limit.
             try:
                 order = get_order_by_client_order_id(client_order_id)
             except Exception as lookup_error:
@@ -641,6 +632,19 @@ def _submit_and_log_buy(
                     created_at=created_at,
                 )
             if order is None:
+                failure_kind = classify_submission_exception(error)
+                if failure_kind == SubmissionFailureKind.RATE_LIMITED:
+                    return _record_rate_limited(
+                        side="BUY", reason=reason, requested_notional=amount,
+                        client_order_id=client_order_id, strategy=strategy,
+                        runtime=runtime, order_role=order_role,
+                    )
+                if failure_kind == SubmissionFailureKind.DEFINITIVE_REJECTION:
+                    return _record_definitive_rejection(
+                        side="BUY", reason=reason, requested_notional=amount,
+                        client_order_id=client_order_id, strategy=strategy,
+                        runtime=runtime, order_role=order_role,
+                    )
                 return _queue_buy_intent_reconciliation(
                     reason=reason, amount=amount, candle_timestamp=candle_timestamp,
                     client_order_id=client_order_id, strategy=strategy,

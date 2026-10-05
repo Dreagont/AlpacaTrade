@@ -744,6 +744,81 @@ class LiveRiskAndOrderSafetyTests(unittest.TestCase):
 
 
 class SubmissionIntentRecoveryTests(unittest.TestCase):
+    def test_buy_post_422_or_429_adopts_filled_order_found_by_client_id(self):
+        class HttpError(Exception):
+            def __init__(self, status_code):
+                self.status_code = status_code
+                super().__init__(str(status_code))
+
+        for status_code in (422, 429):
+            with self.subTest(status_code=status_code):
+                candle = f"candle-post-error-{status_code}"
+                strategy = main._live_strategy()
+                client_id = main._strategy_order_id(
+                    strategy, candle, "BUY", role="strategy_entry"
+                )
+                filled = make_order(
+                    f"filled-after-{status_code}", client_order_id=client_id,
+                    filled_qty="0.0002",
+                )
+                position = make_position(qty="0.0001995")
+                runtime = main.LiveRuntime()
+                pending = {}
+                with (
+                    patch.object(
+                        main, "get_order_by_client_order_id",
+                        side_effect=[None, filled],
+                    ) as lookup,
+                    patch.object(main, "buy_btc", side_effect=HttpError(status_code)) as buy,
+                    patch.object(main, "wait_for_order_fill", return_value=filled),
+                    patch.object(main, "get_btc_position", return_value=position),
+                    patch.object(main, "upsert_order") as write,
+                    patch("database.set_active_bot_position"),
+                    patch.object(main, "_place_protective_stop"),
+                ):
+                    outcome = main._submit_and_log_buy(
+                        "entry", pending, candle, strategy=strategy, runtime=runtime
+                    )
+
+                self.assertEqual(outcome, broker.OrderOutcome.FILLED)
+                self.assertEqual(lookup.call_count, 2)
+                buy.assert_called_once()
+                self.assertAlmostEqual(
+                    runtime.active_position["credited_quantity"], 0.0001995
+                )
+                owned, reason = main.bot_owns_position(position, runtime)
+                self.assertTrue(owned, reason)
+                self.assertFalse(
+                    any(
+                        call.kwargs.get("order_status") in {"rejected", "rate_limited"}
+                        for call in write.call_args_list
+                    )
+                )
+                self.assertEqual(pending, {})
+
+    def test_buy_post_422_with_confirmed_not_found_is_terminal_rejection(self):
+        class HttpError(Exception):
+            status_code = 422
+
+        candle = "candle-post-422-not-found"
+        pending = {}
+        with (
+            patch.object(
+                main, "get_order_by_client_order_id", side_effect=[None, None]
+            ) as lookup,
+            patch.object(main, "buy_btc", side_effect=HttpError("422")) as buy,
+            patch.object(main, "upsert_order") as write,
+        ):
+            outcome = main._submit_and_log_buy("entry", pending, candle)
+
+        self.assertEqual(outcome, broker.OrderOutcome.TERMINAL_NOT_FILLED)
+        self.assertEqual(lookup.call_count, 2)
+        buy.assert_called_once()
+        self.assertEqual(pending, {})
+        self.assertTrue(
+            any(call.kwargs.get("order_status") == "rejected" for call in write.call_args_list)
+        )
+
     def test_preflight_lookup_failure_skips_buy_without_synthetic_pending_order(self):
         pending = {}
         with (
