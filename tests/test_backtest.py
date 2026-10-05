@@ -58,7 +58,7 @@ class BacktestAccountingTests(unittest.TestCase):
             )
         self.assertEqual(
             result["equity_curve"].index[0],
-            flat_bars(2).index[0] + pd.Timedelta(minutes=5),
+            flat_bars(2).index[0],
         )
 
 

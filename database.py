@@ -54,6 +54,25 @@ def _create_tables(connection: sqlite3.Connection) -> None:
         columns.add("realized_gross_pnl")
     if "order_status" not in columns:
         connection.execute("ALTER TABLE orders ADD COLUMN order_status TEXT")
+    indexes = {
+        row[1] for row in connection.execute("PRAGMA index_list(orders)").fetchall()
+    }
+    if "idx_orders_order_id" not in indexes:
+        connection.execute(
+            """
+            DELETE FROM orders
+            WHERE order_id IS NOT NULL
+              AND id NOT IN (
+                  SELECT MAX(id) FROM orders
+                  WHERE order_id IS NOT NULL
+                  GROUP BY order_id
+              )
+            """
+        )
+        connection.execute(
+            "CREATE UNIQUE INDEX idx_orders_order_id "
+            "ON orders(order_id) WHERE order_id IS NOT NULL"
+        )
 
 
 def _report_failure(error: Exception) -> None:
@@ -130,7 +149,7 @@ def log_evaluation(
         _close_safely(connection)
 
 
-def log_order(
+def upsert_order(
     *,
     timestamp: Optional[str] = None,
     order_id: Optional[str],
@@ -140,8 +159,8 @@ def log_order(
     quantity: Optional[float],
     fill_price: Optional[float],
     reason: str,
-    realized_gross_pnl: Optional[float],
-    order_status: Optional[str],
+    realized_gross_pnl: Optional[float] = None,
+    order_status: Optional[str] = None,
 ) -> None:
     timestamp = timestamp or datetime.now(timezone.utc).isoformat()
     connection = None
@@ -155,6 +174,16 @@ def log_order(
                     timestamp, order_id, symbol, side, requested_notional,
                     quantity, fill_price, reason, realized_gross_pnl, order_status
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(order_id) WHERE order_id IS NOT NULL DO UPDATE SET
+                    timestamp=excluded.timestamp,
+                    symbol=excluded.symbol,
+                    side=excluded.side,
+                    requested_notional=excluded.requested_notional,
+                    quantity=excluded.quantity,
+                    fill_price=excluded.fill_price,
+                    reason=excluded.reason,
+                    realized_gross_pnl=excluded.realized_gross_pnl,
+                    order_status=excluded.order_status
                 """,
                 (
                     timestamp,
@@ -173,3 +202,8 @@ def log_order(
         _report_failure(error)
     finally:
         _close_safely(connection)
+
+
+def log_order(**kwargs) -> None:
+    """Backward-compatible name for the order upsert operation."""
+    upsert_order(**kwargs)

@@ -14,7 +14,7 @@ from alpaca.data.requests import CryptoBarsRequest
 
 import config
 import trade_config
-from strategy import calculate_indicators, decide_at
+from strategy import Decision, calculate_indicators, decide_at
 from timeframes import parse_timeframe
 
 
@@ -31,13 +31,34 @@ class OpenPosition:
     entry_reason: str
 
 
-def fetch_history(lookback_days: int, timeframe: str) -> pd.DataFrame:
+WARMUP_SAFETY_BARS = 10
+
+
+def required_warmup_bars(safety_margin: int = WARMUP_SAFETY_BARS) -> int:
+    return max(
+        trade_config.FAST_MA,
+        trade_config.SLOW_MA,
+        trade_config.RSI_PERIOD,
+    ) + max(safety_margin, 0)
+
+
+def fetch_history(
+    lookback_days: int,
+    timeframe: str,
+    *,
+    warmup_bars: Optional[int] = None,
+    end_time: Optional[datetime] = None,
+) -> pd.DataFrame:
     alpaca_timeframe, minutes_per_bar = parse_timeframe(timeframe)
-    end = datetime.now(timezone.utc)
+    end = end_time or datetime.now(timezone.utc)
+    if end.tzinfo is None:
+        end = end.replace(tzinfo=timezone.utc)
+    test_start = end - timedelta(days=lookback_days)
+    warmup_bars = required_warmup_bars() if warmup_bars is None else max(warmup_bars, 0)
     request = CryptoBarsRequest(
         symbol_or_symbols=[config.SYMBOL],
         timeframe=alpaca_timeframe,
-        start=end - timedelta(days=lookback_days),
+        start=test_start - timedelta(minutes=minutes_per_bar * warmup_bars),
         end=end,
     )
     bars = CryptoHistoricalDataClient().get_crypto_bars(request).df
@@ -59,6 +80,8 @@ def fetch_history(lookback_days: int, timeframe: str) -> pd.DataFrame:
     missing = required_columns.difference(bars.columns)
     if missing:
         raise RuntimeError(f"Historical candles are missing fields: {sorted(missing)}")
+    bars.attrs["test_start"] = pd.Timestamp(test_start)
+    bars.attrs["warmup_bars_requested"] = warmup_bars
     return bars
 
 
@@ -110,6 +133,7 @@ def run_backtest(
     timeframe: Optional[str] = None,
     fee_rate: Optional[float] = None,
     slippage: Optional[float] = None,
+    test_start: Optional[Any] = None,
 ) -> dict[str, Any]:
     starting_capital = (
         config.BACKTEST_STARTING_CAPITAL
@@ -126,13 +150,20 @@ def run_backtest(
     if len(bars) < 2:
         raise ValueError("At least two candles are required for a backtest")
 
+    requested_start = test_start or bars.attrs.get("test_start") or bars.index[0]
+    requested_start = pd.Timestamp(requested_start)
+    test_start_index = int(bars.index.searchsorted(requested_start, side="left"))
+    if test_start_index >= len(bars) - 1:
+        raise ValueError("At least two candles must be available in the test period")
+    test_bars = bars.iloc[test_start_index:]
+
     _, minutes_per_bar = parse_timeframe(timeframe)
     indicators = calculate_indicators(bars)
     cash = float(starting_capital)
     position: Optional[OpenPosition] = None
     completed_trades: list[dict[str, Any]] = []
     bar_duration = pd.Timedelta(minutes=minutes_per_bar)
-    equity_times = [bars.index[0] + bar_duration]
+    equity_times = [test_bars.index[0]]
     equity_values = [cash]
     invested_bar_count = 0
     capital_exposures: list[float] = []
@@ -161,11 +192,15 @@ def run_backtest(
         )
         position = None
 
-    for candle_index in range(1, len(bars)):
+    for candle_index in range(test_start_index, len(bars)):
         candle = bars.iloc[candle_index]
         timestamp = bars.index[candle_index]
         open_price = float(candle["open"])
-        decision = decide_at(indicators, candle_index - 1)
+        decision = (
+            Decision("HOLD", "test_period_starts_flat")
+            if candle_index == test_start_index
+            else decide_at(indicators, candle_index - 1)
+        )
         exited_at_open = False
 
         if position is not None:
@@ -278,8 +313,8 @@ def run_backtest(
     total_slippage = sum(trade["slippage_cost"] for trade in completed_trades)
     total_costs = total_fees + total_slippage
 
-    first_open = float(bars.iloc[0]["open"])
-    last_close = float(bars.iloc[-1]["close"])
+    first_open = float(test_bars.iloc[0]["open"])
+    last_close = float(test_bars.iloc[-1]["close"])
     full_buy_fill = first_open * (1 + slippage)
     full_buy_gross_quantity = starting_capital / full_buy_fill
     full_buy_quantity = full_buy_gross_quantity * (1 - fee_rate)
@@ -325,12 +360,13 @@ def run_backtest(
         ],
     )
     durations = [trade["holding_duration_minutes"] for trade in completed_trades]
-    invested_bar_count = min(invested_bar_count, len(bars) - 1)
-    measured_bars = max(len(bars) - 1, 1)
+    invested_bar_count = min(invested_bar_count, len(test_bars))
+    measured_bars = max(len(test_bars), 1)
 
     return {
-        "start_time": bars.index[0],
-        "end_time": bars.index[-1] + bar_duration,
+        "start_time": test_bars.index[0],
+        "end_time": test_bars.index[-1] + bar_duration,
+        "warmup_bars": test_start_index,
         "starting_capital": starting_capital,
         "ending_capital": ending_capital,
         "net_profit": ending_capital - starting_capital,
@@ -451,6 +487,7 @@ def print_report(result: dict[str, Any], title=None) -> None:
     title = title or f"{config.SYMBOL} BACKTEST"
     print(f"\n=== {title} ===")
     print(f"Period: {result['start_time']} to {result['end_time']}")
+    print(f"Warm-up bars excluded from metrics: {result['warmup_bars']}")
     print(f"Starting capital: {_format_money(result['starting_capital'])}")
     print(f"Ending capital: {_format_money(result['ending_capital'])}")
     print(f"Net profit: {_format_money(result['net_profit'])}")
@@ -564,7 +601,10 @@ def _run_main() -> int:
 
     try:
         bars = fetch_history(args.lookback_days, args.timeframe)
-        result = run_backtest(bars, args.starting_capital, args.timeframe)
+        test_start = bars.attrs.get("test_start")
+        result = run_backtest(
+            bars, args.starting_capital, args.timeframe, test_start=test_start
+        )
         zero_cost_result = (
             run_backtest(
                 bars,
@@ -572,6 +612,7 @@ def _run_main() -> int:
                 args.timeframe,
                 fee_rate=0,
                 slippage=0,
+                test_start=test_start,
             )
             if args.zero_cost_diagnostic
             else None
