@@ -229,10 +229,13 @@ def run_backtest(
     selected_strategy = strategy or MA_RSI_CROSSOVER
     stop_loss_percent = selected_strategy.stop_loss_percent
     take_profit_percent = selected_strategy.take_profit_percent
+    max_holding_minutes = selected_strategy.max_holding_minutes
     if starting_capital <= 0:
         raise ValueError("Starting capital must be greater than zero")
     if not 0 <= fee_rate < 1 or not 0 <= slippage < 1:
         raise ValueError("Fee and slippage rates must be in the range [0, 1)")
+    if max_holding_minutes is not None and max_holding_minutes <= 0:
+        raise ValueError("max_holding_minutes must be greater than zero")
     if len(bars) < 2:
         raise ValueError("At least two candles are required for a backtest")
 
@@ -309,6 +312,13 @@ def run_backtest(
                 exited_at_open = True
             elif take_profit_at_open is not None and open_price >= take_profit_at_open:
                 close_position(open_price, timestamp, "take_profit")
+                exited_at_open = True
+            elif (
+                max_holding_minutes is not None
+                and (timestamp - position.entry_time).total_seconds()
+                >= max_holding_minutes * 60
+            ):
+                close_position(open_price, timestamp, "max_holding_time")
                 exited_at_open = True
             elif decision.action == "SELL":
                 close_position(open_price, timestamp, decision.reason)

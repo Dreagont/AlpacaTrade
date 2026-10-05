@@ -21,19 +21,88 @@ def flat_bars(count=4):
     )
 
 
-def test_strategy(decide_at, prepare_indicators=None):
+def test_strategy(
+    decide_at, prepare_indicators=None, *, stop_loss=None, take_profit=None,
+    max_holding_minutes=None,
+):
     return StrategySpec(
         name="test_strategy",
         _prepare_indicators=prepare_indicators or (lambda bars: bars.copy()),
         _decide_at=decide_at,
         _warmup_lookback=lambda: 0,
         _parameters=lambda: {},
-        _stop_loss=lambda: None,
-        _take_profit=lambda: None,
+        _stop_loss=lambda: stop_loss,
+        _take_profit=lambda: take_profit,
+        max_holding_minutes=max_holding_minutes,
     )
 
 
 class BacktestAccountingTests(unittest.TestCase):
+    def test_max_holding_exits_at_first_open_at_or_after_limit(self):
+        bars = flat_bars(7)
+        bars.index = pd.date_range("2026-01-01", periods=7, freq="30min", tz="UTC")
+        strategy = test_strategy(
+            lambda _indicators, index: (
+                Decision("BUY", "entry") if index == 0 else Decision("HOLD", "hold")
+            ),
+            max_holding_minutes=75,
+        )
+        result = run_backtest(
+            bars, starting_capital=1000, timeframe="30Min", fee_rate=0,
+            slippage=0, strategy=strategy,
+        )
+        trade = result["trades"].iloc[0]
+        self.assertEqual(trade["exit_reason"], "max_holding_time")
+        self.assertEqual(trade["entry_time"], bars.index[1])
+        self.assertEqual(trade["exit_time"], bars.index[4])  # 90 minutes after entry.
+        self.assertEqual(strategy.max_holding_minutes, 75)
+
+    def test_open_exit_priority_is_gap_stop_then_gap_target_then_max_then_signal(self):
+        expected = (
+            ("stop", 80.0, "stop_loss"),
+            ("target", 120.0, "take_profit"),
+            ("max", 100.0, "max_holding_time"),
+        )
+        for label, open_price, expected_reason in expected:
+            with self.subTest(label=label):
+                bars = flat_bars(5)
+                bars.index = pd.date_range(
+                    "2026-01-01", periods=5, freq="30min", tz="UTC"
+                )
+                bars.iloc[3, bars.columns.get_loc("open")] = open_price
+                bars.iloc[3, bars.columns.get_loc("high")] = open_price + 1
+                bars.iloc[3, bars.columns.get_loc("low")] = open_price - 1
+                strategy = test_strategy(
+                    lambda _indicators, index: (
+                        Decision("BUY", "entry") if index == 0
+                        else Decision("SELL", "ordinary_sell") if index == 2
+                        else Decision("HOLD", "hold")
+                    ),
+                    stop_loss=0.10,
+                    take_profit=0.10,
+                    max_holding_minutes=60,
+                )
+                result = run_backtest(
+                    bars, starting_capital=1000, timeframe="30Min", fee_rate=0,
+                    slippage=0, strategy=strategy,
+                )
+                self.assertEqual(result["trades"].iloc[0]["exit_reason"], expected_reason)
+
+    def test_existing_strategy_specs_default_to_no_max_holding(self):
+        strategy = test_strategy(
+            lambda _indicators, index: (
+                Decision("BUY", "entry") if index == 0
+                else Decision("HOLD", "hold")
+            )
+        )
+        result = run_backtest(
+            flat_bars(), starting_capital=100, timeframe="5Min", fee_rate=0,
+            slippage=0,
+            strategy=strategy,
+        )
+        self.assertIsNone(strategy.max_holding_minutes)
+        self.assertEqual(result["trades"].iloc[0]["exit_reason"], "end_of_backtest")
+
     def test_liquidate_at_end_defaults_true_and_can_be_disabled(self):
         bars = flat_bars(4)
         bars.iloc[-1, bars.columns.get_loc("close")] = 120.0

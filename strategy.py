@@ -26,6 +26,7 @@ class StrategySpec:
     _parameters: Callable[[], dict[str, Any]]
     _stop_loss: Callable[[], float | None]
     _take_profit: Callable[[], float | None]
+    max_holding_minutes: float | None = None
 
     def required_warmup_bars(
         self, safety_margin: int = WARMUP_SAFETY_BARS

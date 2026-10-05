@@ -59,6 +59,9 @@ class RegimeFilterResearchTests(unittest.TestCase):
             },
             index=index,
         )
+        # One interior gap belongs only to block 1. Each CSV row must report
+        # its own [block_start, block_end) data-quality counts.
+        bars = bars.drop(index=index[required + 2])
         original_backtest = backtest.run_backtest
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "filter.csv"
@@ -90,13 +93,21 @@ class RegimeFilterResearchTests(unittest.TestCase):
         )
         filtered = [row for row in rows if row["strategy_name"] == "donchian_regime_filter"]
         self.assertTrue(all(row["bullish_bar_count"] == 0 for row in filtered))
-        self.assertTrue(all(row["non_bullish_bar_count"] == 6 for row in filtered))
+        self.assertEqual([row["non_bullish_bar_count"] for row in filtered], [5, 6])
         self.assertTrue(all(row["bullish_bar_percent"] == 0 for row in filtered))
         self.assertTrue(all(row["error"] == "" for row in rows))
+        self.assertEqual([row["expected_candle_count"] for row in rows[:3]], [6] * 3)
+        self.assertEqual([row["actual_candle_count"] for row in rows[:3]], [5] * 3)
+        self.assertEqual([row["missing_candle_count"] for row in rows[:3]], [1] * 3)
+        self.assertEqual([row["expected_candle_count"] for row in rows[3:]], [6] * 3)
+        self.assertEqual([row["actual_candle_count"] for row in rows[3:]], [6] * 3)
+        self.assertEqual([row["missing_candle_count"] for row in rows[3:]], [0] * 3)
         report = console.getvalue()
         self.assertIn("FILTER DELTA:", report)
         self.assertIn("POST-HOC BTC-positive", report)
         self.assertIn("in-sample evidence", report)
+        self.assertIn("displayed blocks summarize the historical period in this run", report)
+        self.assertNotIn("These 16 historical blocks", report)
         self.assertNotRegex(report.lower(), r"\b(best strategy|winner|optimal)\b")
         self.assertIn("bullish_bar_percent", saved[0])
         self.assertIn("exits_due_to_regime_filter", saved[0])

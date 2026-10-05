@@ -199,7 +199,11 @@ def run_regime_filter_research(
     )
     for block_index, block in enumerate(regime_blocks):
         raw_btc_return = None
+        block_quality = None
         if bars is not None:
+            block_quality = _quality_for_span(
+                bars, timeframe, block["block_start"], block["block_end"]
+            )
             _, minutes_per_bar = parse_timeframe(timeframe)
             duration = pd.Timedelta(minutes=minutes_per_bar)
             market = bars.copy()
@@ -231,7 +235,7 @@ def run_regime_filter_research(
                 "aligned_research_end": aligned_end.isoformat(),
                 "fee_rate": fee_rate, "slippage_rate": slippage_rate,
                 "starting_capital": starting_capital,
-                **(data_quality or {}),
+                **(block_quality or {}),
             })
             row["raw_btc_return_percent"] = raw_btc_return
             result = result_by_strategy.get(name)
@@ -325,7 +329,7 @@ def _print_report(rows, results, blocks, requested_time, aligned_end, starting_c
         for name in STRATEGIES:
             values = [row["block_net_return_percent"] for row in rows if row["strategy_name"] == name and row["block_index"] in indexes and not row["error"] and row["block_net_return_percent"] is not None]
             print(f"  {name}: average={mean(values):.2f}% n={len(values)}" if values else f"  {name}: N/A")
-    print("\nThese 16 historical blocks have already been inspected during strategy development.")
+    print("\nThe displayed blocks summarize the historical period in this run.")
     print("This is exploratory / in-sample evidence, not untouched holdout validation or proof of profitability.")
     print("Any positive result still requires holdout, walk-forward, and out-of-sample validation.")
 
