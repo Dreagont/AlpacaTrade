@@ -382,6 +382,7 @@ def create_regime_only_strategy() -> StrategySpec:
 
 DONCHIAN_BREAKOUT = create_donchian_breakout_strategy()
 DONCHIAN_REGIME_FILTER = create_regime_filtered_donchian_strategy()
+REGIME_ONLY_4H = create_regime_only_strategy()
 STRATEGY_REGISTRY = {
     MA_RSI_CROSSOVER.name: MA_RSI_CROSSOVER,
     DONCHIAN_BREAKOUT.name: DONCHIAN_BREAKOUT,

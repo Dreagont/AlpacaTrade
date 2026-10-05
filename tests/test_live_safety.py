@@ -1013,6 +1013,78 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
             strategy.decide(prepared),
         )
 
+    def test_live_allow_list_keeps_ma_rsi_and_uses_frozen_regime_factory(self):
+        import strategy
+
+        with patch.object(trade_config, "LIVE_STRATEGY", "ma_rsi_crossover"):
+            self.assertIs(main._live_strategy(), strategy.MA_RSI_CROSSOVER)
+
+        with (
+            patch.object(trade_config, "LIVE_STRATEGY", "regime_only_4h"),
+            patch.object(trade_config, "LIVE_TIMEFRAME", "4Hour"),
+        ):
+            selected = main._live_strategy()
+        self.assertIs(selected, strategy.REGIME_ONLY_4H)
+        self.assertEqual(selected.parameters["regime_sma_period"], 200)
+        self.assertEqual(selected.parameters["regime_slope_lookback"], 20)
+        self.assertIsNone(selected.stop_loss_percent)
+        self.assertIsNone(selected.take_profit_percent)
+        self.assertIsNone(selected.max_holding_minutes)
+
+    def test_regime_only_live_strategy_rejects_non_four_hour_timeframe(self):
+        with (
+            patch.object(trade_config, "LIVE_STRATEGY", "regime_only_4h"),
+            patch.object(trade_config, "LIVE_TIMEFRAME", "1Hour"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "requires LIVE_TIMEFRAME"):
+                main._live_strategy()
+
+    def test_unknown_live_strategy_is_rejected(self):
+        with patch.object(trade_config, "LIVE_STRATEGY", "not_a_strategy"):
+            with self.assertRaisesRegex(RuntimeError, "restricted"):
+                main._live_strategy()
+
+    def test_regime_only_live_signals_and_not_ready_hold_match_frozen_factory(self):
+        import numpy as np
+        import pandas as pd
+        from strategy import Decision, create_regime_only_strategy
+
+        frozen = create_regime_only_strategy()
+        index = pd.date_range("2024-01-01", periods=260, freq="4h", tz="UTC")
+        bullish = pd.DataFrame({"close": np.arange(100.0, 360.0)}, index=index)
+        bearish = pd.DataFrame({"close": np.arange(360.0, 100.0, -1.0)}, index=index)
+        self.assertEqual(
+            frozen.decide_at(frozen.prepare_indicators(bullish), len(bullish) - 1),
+            Decision("BUY", "regime_on"),
+        )
+        self.assertEqual(
+            frozen.decide_at(frozen.prepare_indicators(bearish), len(bearish) - 1),
+            Decision("SELL", "regime_filter_off"),
+        )
+        short_history = bullish.iloc[:219]
+        self.assertEqual(
+            frozen.decide_at(
+                frozen.prepare_indicators(short_history), len(short_history) - 1
+            ),
+            Decision("HOLD", "regime_filter_not_ready"),
+        )
+
+    def test_regime_only_without_fixed_stops_is_safe_in_live_risk_path(self):
+        import strategy
+
+        selected = strategy.REGIME_ONLY_4H
+        position = make_position()
+        self.assertIsNone(main._risk_exit_reason(position, 1.0, selected))
+        self.assertIsNone(main._risk_exit_reason(position, 1_000_000.0, selected))
+        with patch.object(trade_config, "ENABLE_BROKER_STOP_LIMIT", True):
+            self.assertIsNone(
+                main._place_protective_stop(
+                    make_order(), "candle-1", {}, selected,
+                    position=position,
+                    runtime=main.LiveRuntime(active_position={"source_confirmed": True}),
+                )
+            )
+
     def test_live_strategy_rejects_donchian_and_uses_spec_risk_values(self):
         with patch.object(trade_config, "LIVE_STRATEGY", "donchian_breakout"):
             with self.assertRaisesRegex(RuntimeError, "restricted"):

@@ -44,7 +44,7 @@ from broker import (
 )
 from market_data import get_btc_bars, get_btc_market_price
 from risk import can_buy
-from strategy import StrategySpec, get_strategy
+from strategy import REGIME_ONLY_4H, StrategySpec, get_strategy
 
 
 RISK_EXIT_STATE_KEY = "pending_risk_exit"
@@ -102,10 +102,20 @@ def _optional_float(value):
 
 
 def _live_strategy() -> StrategySpec:
-    strategy = get_strategy(trade_config.LIVE_STRATEGY)
-    if strategy.name != "ma_rsi_crossover":
+    strategy_name = trade_config.LIVE_STRATEGY
+    allowed_strategies = {"ma_rsi_crossover", "regime_only_4h"}
+    if strategy_name not in allowed_strategies:
         raise RuntimeError(
-            "SAFE-HALT: live execution is restricted to ma_rsi_crossover in this release"
+            "SAFE-HALT: live execution is restricted to ma_rsi_crossover and regime_only_4h"
+        )
+    strategy = (
+        REGIME_ONLY_4H
+        if strategy_name == "regime_only_4h"
+        else get_strategy(strategy_name)
+    )
+    if strategy.name == "regime_only_4h" and trade_config.LIVE_TIMEFRAME != "4Hour":
+        raise RuntimeError(
+            'SAFE-HALT: regime_only_4h requires LIVE_TIMEFRAME == "4Hour"'
         )
     return strategy
 
