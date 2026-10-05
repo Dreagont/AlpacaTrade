@@ -6,7 +6,7 @@ import pandas as pd
 
 import backtest
 import trade_config
-from strategy import Decision
+from strategy import Decision, StrategySpec
 
 
 def warmup_sample_bars():
@@ -20,6 +20,18 @@ def warmup_sample_bars():
             "volume": [1.0] * 6,
         },
         index=index,
+    )
+
+
+def test_strategy(prepare_indicators, decide_at):
+    return StrategySpec(
+        name="test_strategy",
+        _prepare_indicators=prepare_indicators,
+        _decide_at=decide_at,
+        _warmup_lookback=lambda: 0,
+        _parameters=lambda: {},
+        _stop_loss=lambda: trade_config.STOP_LOSS_PERCENT,
+        _take_profit=lambda: trade_config.TAKE_PROFIT_PERCENT,
     )
 
 
@@ -51,8 +63,6 @@ class WarmupTests(unittest.TestCase):
             return Decision("BUY", "first_test_signal") if index == 3 else Decision("HOLD", "hold")
 
         with (
-            patch("backtest.calculate_indicators", side_effect=fake_indicators),
-            patch("backtest.decide_at", side_effect=fake_decide),
             patch.object(trade_config, "STOP_LOSS_PERCENT", 0.5),
             patch.object(trade_config, "TAKE_PROFIT_PERCENT", 1.0),
         ):
@@ -63,6 +73,7 @@ class WarmupTests(unittest.TestCase):
                 fee_rate=0,
                 slippage=0,
                 test_start=test_start,
+                strategy=test_strategy(fake_indicators, fake_decide),
             )
 
         self.assertEqual(indicator_inputs, [(bars.index[0], len(bars))])
@@ -81,7 +92,6 @@ class WarmupTests(unittest.TestCase):
             return Decision("BUY", "pretest_buy") if index == 2 else Decision("HOLD", "hold")
 
         with (
-            patch("backtest.decide_at", side_effect=pretest_only_buy),
             patch.object(trade_config, "STOP_LOSS_PERCENT", 0.5),
             patch.object(trade_config, "TAKE_PROFIT_PERCENT", 1.0),
         ):
@@ -92,6 +102,7 @@ class WarmupTests(unittest.TestCase):
                 fee_rate=0,
                 slippage=0,
                 test_start=test_start,
+                strategy=test_strategy(lambda frame: frame.copy(), pretest_only_buy),
             )
 
         self.assertEqual(result["total_trades"], 0)

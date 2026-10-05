@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from strategy import decide_at
+from strategy import MA_RSI_CROSSOVER, decide_at
 
 
 def indicators(previous_fast, previous_slow, current_fast, current_slow, rsi):
@@ -16,6 +16,19 @@ def indicators(previous_fast, previous_slow, current_fast, current_slow, rsi):
 
 
 class StrategyDecisionTests(unittest.TestCase):
+    def test_ma_rsi_adapter_preserves_public_buy_and_sell_signals(self):
+        buy_frame = indicators(10, 11, 12, 11, 50)
+        sell_frame = indicators(12, 11, 10, 11, 50)
+
+        self.assertEqual(
+            MA_RSI_CROSSOVER.decide_at(buy_frame, 1),
+            decide_at(buy_frame, 1),
+        )
+        self.assertEqual(
+            MA_RSI_CROSSOVER.decide_at(sell_frame, 1),
+            decide_at(sell_frame, 1),
+        )
+
     def test_bullish_crossover_with_rsi_below_threshold_buys(self):
         decision = decide_at(indicators(10, 11, 12, 11, 50), 1)
         self.assertEqual(

@@ -14,7 +14,7 @@ from alpaca.data.requests import CryptoBarsRequest
 
 import config
 import trade_config
-from strategy import Decision, calculate_indicators, decide_at
+from strategy import Decision, MA_RSI_CROSSOVER, StrategySpec, WARMUP_SAFETY_BARS
 from timeframes import parse_timeframe
 
 
@@ -31,15 +31,12 @@ class OpenPosition:
     entry_reason: str
 
 
-WARMUP_SAFETY_BARS = 10
-
-
-def required_warmup_bars(safety_margin: int = WARMUP_SAFETY_BARS) -> int:
-    return max(
-        trade_config.FAST_MA,
-        trade_config.SLOW_MA,
-        trade_config.RSI_PERIOD,
-    ) + max(safety_margin, 0)
+def required_warmup_bars(
+    safety_margin: int = WARMUP_SAFETY_BARS,
+    strategy: StrategySpec | None = None,
+) -> int:
+    selected_strategy = strategy or MA_RSI_CROSSOVER
+    return selected_strategy.required_warmup_bars(safety_margin)
 
 
 def fetch_history(
@@ -134,6 +131,7 @@ def run_backtest(
     fee_rate: Optional[float] = None,
     slippage: Optional[float] = None,
     test_start: Optional[Any] = None,
+    strategy: StrategySpec | None = None,
 ) -> dict[str, Any]:
     starting_capital = (
         config.BACKTEST_STARTING_CAPITAL
@@ -143,6 +141,9 @@ def run_backtest(
     timeframe = timeframe or trade_config.LIVE_TIMEFRAME
     fee_rate = config.BACKTEST_FEE_PERCENT if fee_rate is None else fee_rate
     slippage = config.BACKTEST_SLIPPAGE_PERCENT if slippage is None else slippage
+    selected_strategy = strategy or MA_RSI_CROSSOVER
+    stop_loss_percent = selected_strategy.stop_loss_percent
+    take_profit_percent = selected_strategy.take_profit_percent
     if starting_capital <= 0:
         raise ValueError("Starting capital must be greater than zero")
     if not 0 <= fee_rate < 1 or not 0 <= slippage < 1:
@@ -158,7 +159,7 @@ def run_backtest(
     test_bars = bars.iloc[test_start_index:]
 
     _, minutes_per_bar = parse_timeframe(timeframe)
-    indicators = calculate_indicators(bars)
+    indicators = selected_strategy.prepare_indicators(bars)
     cash = float(starting_capital)
     position: Optional[OpenPosition] = None
     completed_trades: list[dict[str, Any]] = []
@@ -199,28 +200,29 @@ def run_backtest(
         decision = (
             Decision("HOLD", "test_period_starts_flat")
             if candle_index == test_start_index
-            else decide_at(indicators, candle_index - 1)
+            else selected_strategy.decide_at(indicators, candle_index - 1)
         )
         exited_at_open = False
 
         if position is not None:
-            stop_at_open = position.entry_price * (1 - trade_config.STOP_LOSS_PERCENT)
-            take_profit_at_open = position.entry_price * (
-                1 + trade_config.TAKE_PROFIT_PERCENT
+            stop_at_open = (
+                position.entry_price * (1 - stop_loss_percent)
+                if stop_loss_percent is not None
+                else None
             )
-            if open_price <= stop_at_open:
+            take_profit_at_open = (
+                position.entry_price * (1 + take_profit_percent)
+                if take_profit_percent is not None
+                else None
+            )
+            if stop_at_open is not None and open_price <= stop_at_open:
                 close_position(open_price, timestamp, "stop_loss")
                 exited_at_open = True
-            elif open_price >= take_profit_at_open:
+            elif take_profit_at_open is not None and open_price >= take_profit_at_open:
                 close_position(open_price, timestamp, "take_profit")
                 exited_at_open = True
             elif decision.action == "SELL":
-                reason = (
-                    "bearish_crossover"
-                    if decision.reason == "bearish_ma_crossover"
-                    else decision.reason
-                )
-                close_position(open_price, timestamp, reason)
+                close_position(open_price, timestamp, decision.reason)
                 exited_at_open = True
         elif position is None and decision.action == "BUY":
             requested_notional = min(
@@ -259,19 +261,25 @@ def run_backtest(
             capital_exposures.append(0.0)
 
         if position is not None and not exited_at_open:
-            stop_price = position.entry_price * (1 - trade_config.STOP_LOSS_PERCENT)
-            take_profit_price = position.entry_price * (
-                1 + trade_config.TAKE_PROFIT_PERCENT
+            stop_price = (
+                position.entry_price * (1 - stop_loss_percent)
+                if stop_loss_percent is not None
+                else None
+            )
+            take_profit_price = (
+                position.entry_price * (1 + take_profit_percent)
+                if take_profit_percent is not None
+                else None
             )
             low = float(candle["low"])
             high = float(candle["high"])
-            stop_hit = low <= stop_price
-            take_profit_hit = high >= take_profit_price
+            stop_hit = stop_price is not None and low <= stop_price
+            take_profit_hit = take_profit_price is not None and high >= take_profit_price
 
             # If OHLC cannot reveal which threshold came first, assume stop-loss first.
-            if stop_hit:
+            if stop_hit and stop_price is not None:
                 close_position(min(open_price, stop_price), timestamp, "stop_loss")
-            elif take_profit_hit:
+            elif take_profit_hit and take_profit_price is not None:
                 close_position(
                     max(open_price, take_profit_price), timestamp, "take_profit"
                 )
@@ -306,8 +314,24 @@ def run_backtest(
     winning_trades = [trade for trade in completed_trades if trade["net_pnl"] > 0]
     losing_trades = [trade for trade in completed_trades if trade["net_pnl"] < 0]
     net_pnls = [trade["net_pnl"] for trade in completed_trades]
-    gross_wins = sum(trade["net_pnl"] for trade in winning_trades)
-    gross_losses = abs(sum(trade["net_pnl"] for trade in losing_trades))
+    net_profit_wins = sum(trade["net_pnl"] for trade in winning_trades)
+    net_profit_losses = abs(sum(trade["net_pnl"] for trade in losing_trades))
+    gross_profit_wins = sum(
+        trade["gross_pnl"] for trade in completed_trades if trade["gross_pnl"] > 0
+    )
+    gross_profit_losses = abs(
+        sum(
+            trade["gross_pnl"]
+            for trade in completed_trades
+            if trade["gross_pnl"] < 0
+        )
+    )
+    net_profit_factor = (
+        net_profit_wins / net_profit_losses if net_profit_losses else None
+    )
+    gross_profit_factor = (
+        gross_profit_wins / gross_profit_losses if gross_profit_losses else None
+    )
     total_gross_pnl = sum(trade["gross_pnl"] for trade in completed_trades)
     total_fees = sum(trade["fees"] for trade in completed_trades)
     total_slippage = sum(trade["slippage_cost"] for trade in completed_trades)
@@ -340,6 +364,7 @@ def run_backtest(
     strategy_return = (ending_capital / starting_capital - 1) * 100
     full_buy_hold_return = (full_buy_hold_ending / starting_capital - 1) * 100
     same_notional_return = (same_notional_ending / starting_capital - 1) * 100
+    raw_market_return = (last_close / first_open - 1) * 100 if first_open else None
     trades_frame = pd.DataFrame(
         completed_trades,
         columns=[
@@ -363,10 +388,19 @@ def run_backtest(
     invested_bar_count = min(invested_bar_count, len(test_bars))
     measured_bars = max(len(test_bars), 1)
 
+    available_pretest_bars = test_start_index
+    required_strategy_warmup_bars = required_warmup_bars(strategy=selected_strategy)
     return {
+        "strategy_name": selected_strategy.name,
+        "strategy_parameters": selected_strategy.parameters,
+        "stop_loss_percent": stop_loss_percent,
+        "take_profit_percent": take_profit_percent,
         "start_time": test_bars.index[0],
         "end_time": test_bars.index[-1] + bar_duration,
-        "warmup_bars": test_start_index,
+        # Keep warmup_bars as a compatibility alias for available pre-test bars.
+        "warmup_bars": available_pretest_bars,
+        "required_warmup_bars": required_strategy_warmup_bars,
+        "available_pretest_bars": available_pretest_bars,
         "starting_capital": starting_capital,
         "ending_capital": ending_capital,
         "net_profit": ending_capital - starting_capital,
@@ -393,7 +427,10 @@ def run_backtest(
         "average_pnl_per_trade": (
             sum(net_pnls) / len(net_pnls) if net_pnls else None
         ),
-        "profit_factor": gross_wins / gross_losses if gross_losses else None,
+        "net_profit_factor": net_profit_factor,
+        "gross_profit_factor": gross_profit_factor,
+        # Compatibility alias: profit_factor has always used net trade PnL.
+        "profit_factor": net_profit_factor,
         "max_drawdown": max_drawdown,
         "daily_sharpe": float(daily_sharpe) if daily_sharpe is not None else None,
         "equity_curve": equity_curve,
@@ -401,6 +438,7 @@ def run_backtest(
         "full_buy_hold_return": full_buy_hold_return,
         "same_notional_ending": same_notional_ending,
         "same_notional_return": same_notional_return,
+        "raw_market_return_percent": raw_market_return,
         "same_notional": same_notional,
         "gross_pnl": total_gross_pnl,
         "total_fees": total_fees,
@@ -415,11 +453,8 @@ def run_backtest(
             else None
         ),
         "daily_return_observations": daily_return_observations,
-        "exit_reasons": (
-            "stop_loss",
-            "take_profit",
-            "bearish_crossover",
-            "end_of_backtest",
+        "exit_reasons": tuple(
+            dict.fromkeys(trade["exit_reason"] for trade in completed_trades)
         ),
         "average_holding_minutes": sum(durations) / len(durations) if durations else None,
         "median_holding_minutes": (
@@ -484,10 +519,14 @@ def _exit_reason_rows(result: dict[str, Any]) -> None:
 
 
 def print_report(result: dict[str, Any], title=None) -> None:
-    title = title or f"{config.SYMBOL} BACKTEST"
+    title = title or f"{config.SYMBOL} {result.get('strategy_name', 'BACKTEST')} BACKTEST"
     print(f"\n=== {title} ===")
     print(f"Period: {result['start_time']} to {result['end_time']}")
-    print(f"Warm-up bars excluded from metrics: {result['warmup_bars']}")
+    print(f"Required warm-up bars: {result.get('required_warmup_bars', result['warmup_bars'])}")
+    print(
+        "Available pre-test bars excluded from metrics: "
+        f"{result.get('available_pretest_bars', result['warmup_bars'])}"
+    )
     print(f"Starting capital: {_format_money(result['starting_capital'])}")
     print(f"Ending capital: {_format_money(result['ending_capital'])}")
     print(f"Net profit: {_format_money(result['net_profit'])}")
@@ -499,13 +538,20 @@ def print_report(result: dict[str, Any], title=None) -> None:
     print(f"Average winning trade: {_format_money(result['average_winning_trade'])}")
     print(f"Average losing trade: {_format_money(result['average_losing_trade'])}")
     print(f"Average PnL per trade: {_format_money(result['average_pnl_per_trade'])}")
-    factor = result["profit_factor"]
-    print("Profit factor: N/A" if factor is None else f"Profit factor: {factor:.3f}")
+    factor = result.get("net_profit_factor", result["profit_factor"])
+    print("Net profit factor: N/A" if factor is None else f"Net profit factor: {factor:.3f}")
+    gross_factor = result.get("gross_profit_factor")
+    print(
+        "Gross profit factor: N/A"
+        if gross_factor is None
+        else f"Gross profit factor: {gross_factor:.3f}"
+    )
     print(f"Maximum drawdown: {_format_percent(result['max_drawdown'])}")
     sharpe = result["daily_sharpe"]
     print("Daily Sharpe ratio: N/A" if sharpe is None else f"Daily Sharpe ratio: {sharpe:.3f}")
 
     print("\nBenchmarks:")
+    print(f"Raw BTC market return: {_format_percent(result['raw_market_return_percent'])}")
     print(
         "Full-capital buy & hold (all starting capital): "
         f"{_format_percent(result['full_buy_hold_return'])}"
@@ -553,10 +599,13 @@ def print_report(result: dict[str, Any], title=None) -> None:
     print(f"Daily return observations: {result['daily_return_observations']}")
     if result["daily_return_observations"] < 60:
         print("WARNING: Daily Sharpe is based on a short sample and is not statistically reliable.")
-    print(
-        "SL/TP backtest uses intrabar OHLC threshold detection. Live bot checks latest market "
-        "price on each poll. Therefore risk-exit execution may differ between backtest and live."
-    )
+    if result.get("stop_loss_percent") is not None or result.get("take_profit_percent") is not None:
+        print(
+            "Fixed risk exits use intrabar OHLC threshold detection. Live bot checks latest "
+            "market price on each poll, so risk-exit execution may differ between backtest and live."
+        )
+    else:
+        print("This strategy has no fixed stop-loss or take-profit; its signal defines exits.")
     print(
         "Accounting assumption: BUY fees are withheld in BTC and valued at entry market price; "
         "SELL fees are deducted from USD proceeds. Entry cash decreases by requested notional."
