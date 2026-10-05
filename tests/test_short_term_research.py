@@ -378,6 +378,7 @@ class ShortTermStrategyTests(unittest.TestCase):
         self.assertTrue(all(row["error"] == "" for row in rows))
         self.assertIn("Common aligned end:", console.getvalue())
         self.assertIn("RegimeDelta summary:", console.getvalue())
+        self.assertIn("gated_entries=", console.getvalue())
         self.assertEqual(
             totals[0]["configured_nominal_round_trip_friction_percent"], 0.6
         )

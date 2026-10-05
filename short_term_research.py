@@ -1014,8 +1014,9 @@ def _print_report(
             f"ungated={_format(baseline['block_net_return_percent'], '%')} "
             f"gated={_format(gated['block_net_return_percent'], '%')} "
             f"RegimeDelta={_format(delta, '%')} "
-            f"entries={gated['entries_in_block']} exits={gated['exits_in_block']} "
-            f"costs=${gated['charged_costs_in_block']:.2f}"
+            f"gated_entries={gated['entries_in_block']} "
+            f"gated_exits={gated['exits_in_block']} "
+            f"gated_costs=${gated['charged_costs_in_block']:.2f}"
         )
     if deltas:
         print(

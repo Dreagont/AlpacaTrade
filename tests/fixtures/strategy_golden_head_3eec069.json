@@ -1,0 +1,5733 @@
+{
+  "generator": {
+    "method": "numpy default_rng seeded lognormal OHLC random walk",
+    "periods": 5000,
+    "seed_30min": 20261006,
+    "seed_4hour": 20261005
+  },
+  "runs": {
+    "donchian_breakout|liquidate=false": {
+      "ending_equity": 991.4973619824,
+      "trades": [
+        {
+          "entry_time": "2018-01-09T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-01-11T16:00:00+00:00",
+          "net_pnl": -0.2947635799
+        },
+        {
+          "entry_time": "2018-01-16T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-01-21T04:00:00+00:00",
+          "net_pnl": 0.0418470412
+        },
+        {
+          "entry_time": "2018-01-31T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-02-04T00:00:00+00:00",
+          "net_pnl": -0.5693049725
+        },
+        {
+          "entry_time": "2018-02-07T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-02-08T20:00:00+00:00",
+          "net_pnl": -0.5616051538
+        },
+        {
+          "entry_time": "2018-02-18T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-02-22T00:00:00+00:00",
+          "net_pnl": 0.1935680095
+        },
+        {
+          "entry_time": "2018-02-26T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-02-27T20:00:00+00:00",
+          "net_pnl": -0.7605852144
+        },
+        {
+          "entry_time": "2018-03-07T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-03-11T08:00:00+00:00",
+          "net_pnl": -0.1350829038
+        },
+        {
+          "entry_time": "2018-03-14T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-03-15T12:00:00+00:00",
+          "net_pnl": -0.7548449096
+        },
+        {
+          "entry_time": "2018-03-17T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-03-20T00:00:00+00:00",
+          "net_pnl": -0.4284549534
+        },
+        {
+          "entry_time": "2018-03-22T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-03-25T04:00:00+00:00",
+          "net_pnl": -0.0407966163
+        },
+        {
+          "entry_time": "2018-04-05T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-10T04:00:00+00:00",
+          "net_pnl": -0.2486695581
+        },
+        {
+          "entry_time": "2018-04-13T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-16T12:00:00+00:00",
+          "net_pnl": -0.0552793596
+        },
+        {
+          "entry_time": "2018-04-19T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-21T16:00:00+00:00",
+          "net_pnl": -0.6348651845
+        },
+        {
+          "entry_time": "2018-05-15T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-05-21T08:00:00+00:00",
+          "net_pnl": 0.1516071784
+        },
+        {
+          "entry_time": "2018-05-25T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-06-01T12:00:00+00:00",
+          "net_pnl": 0.8102977296
+        },
+        {
+          "entry_time": "2018-06-09T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-06-15T00:00:00+00:00",
+          "net_pnl": -0.6529862749
+        },
+        {
+          "entry_time": "2018-06-19T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-06-23T08:00:00+00:00",
+          "net_pnl": -0.7713724383
+        },
+        {
+          "entry_time": "2018-07-08T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-07-18T00:00:00+00:00",
+          "net_pnl": 0.6028080258
+        },
+        {
+          "entry_time": "2018-07-23T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-07-25T12:00:00+00:00",
+          "net_pnl": -0.8802182432
+        },
+        {
+          "entry_time": "2018-08-16T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-08-22T00:00:00+00:00",
+          "net_pnl": 1.3915045408
+        },
+        {
+          "entry_time": "2018-08-24T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-08-26T00:00:00+00:00",
+          "net_pnl": -0.3838017564
+        },
+        {
+          "entry_time": "2018-09-01T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-09-04T00:00:00+00:00",
+          "net_pnl": -0.7673585635
+        },
+        {
+          "entry_time": "2018-09-05T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-09-21T08:00:00+00:00",
+          "net_pnl": 5.1444748706
+        },
+        {
+          "entry_time": "2018-09-29T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-01T00:00:00+00:00",
+          "net_pnl": -0.9245939057
+        },
+        {
+          "entry_time": "2018-10-04T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-09T04:00:00+00:00",
+          "net_pnl": -0.2104941194
+        },
+        {
+          "entry_time": "2018-10-13T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-22T12:00:00+00:00",
+          "net_pnl": 0.6146549242
+        },
+        {
+          "entry_time": "2018-10-25T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-05T12:00:00+00:00",
+          "net_pnl": 2.3077271326
+        },
+        {
+          "entry_time": "2018-11-08T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-10T12:00:00+00:00",
+          "net_pnl": -0.6985025273
+        },
+        {
+          "entry_time": "2018-11-20T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-23T04:00:00+00:00",
+          "net_pnl": -0.4012057862
+        },
+        {
+          "entry_time": "2018-11-24T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-26T12:00:00+00:00",
+          "net_pnl": -0.8787794303
+        },
+        {
+          "entry_time": "2018-12-04T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-12-06T12:00:00+00:00",
+          "net_pnl": -0.2440309995
+        },
+        {
+          "entry_time": "2018-12-12T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-12-13T16:00:00+00:00",
+          "net_pnl": -0.8304321402
+        },
+        {
+          "entry_time": "2018-12-18T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-12-22T00:00:00+00:00",
+          "net_pnl": 0.3563175897
+        },
+        {
+          "entry_time": "2018-12-25T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-12-28T12:00:00+00:00",
+          "net_pnl": -0.344270689
+        },
+        {
+          "entry_time": "2019-01-18T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-01-22T16:00:00+00:00",
+          "net_pnl": -0.382593265
+        },
+        {
+          "entry_time": "2019-02-01T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-02-07T16:00:00+00:00",
+          "net_pnl": 0.6555194841
+        },
+        {
+          "entry_time": "2019-03-01T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-03-04T12:00:00+00:00",
+          "net_pnl": 0.0339216803
+        },
+        {
+          "entry_time": "2019-03-08T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-03-09T20:00:00+00:00",
+          "net_pnl": -0.4803812083
+        },
+        {
+          "entry_time": "2019-03-10T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-03-10T12:00:00+00:00",
+          "net_pnl": -0.7554351019
+        },
+        {
+          "entry_time": "2019-03-15T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-03-22T12:00:00+00:00",
+          "net_pnl": 0.4504055078
+        },
+        {
+          "entry_time": "2019-03-24T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-03-27T16:00:00+00:00",
+          "net_pnl": 0.2240865321
+        },
+        {
+          "entry_time": "2019-04-05T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-04-11T00:00:00+00:00",
+          "net_pnl": 0.2761188231
+        },
+        {
+          "entry_time": "2019-04-13T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-04-16T16:00:00+00:00",
+          "net_pnl": 0.0222716648
+        },
+        {
+          "entry_time": "2019-05-05T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-05-06T20:00:00+00:00",
+          "net_pnl": -0.8860020497
+        },
+        {
+          "entry_time": "2019-05-10T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-05-11T16:00:00+00:00",
+          "net_pnl": -0.7254021099
+        },
+        {
+          "entry_time": "2019-05-16T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-05-19T08:00:00+00:00",
+          "net_pnl": -0.7591215382
+        },
+        {
+          "entry_time": "2019-05-22T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-05-25T00:00:00+00:00",
+          "net_pnl": -0.7617704693
+        },
+        {
+          "entry_time": "2019-05-28T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-05-29T00:00:00+00:00",
+          "net_pnl": -0.8864519977
+        },
+        {
+          "entry_time": "2019-06-05T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-06-08T16:00:00+00:00",
+          "net_pnl": -0.7499830604
+        },
+        {
+          "entry_time": "2019-06-13T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-06-16T00:00:00+00:00",
+          "net_pnl": -0.6577149873
+        },
+        {
+          "entry_time": "2019-06-28T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-07-03T04:00:00+00:00",
+          "net_pnl": -0.1672106801
+        },
+        {
+          "entry_time": "2019-07-15T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-07-21T20:00:00+00:00",
+          "net_pnl": 0.9328455842
+        },
+        {
+          "entry_time": "2019-07-26T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-07-29T16:00:00+00:00",
+          "net_pnl": -0.3442968506
+        },
+        {
+          "entry_time": "2019-08-02T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-08T00:00:00+00:00",
+          "net_pnl": 1.3389781555
+        },
+        {
+          "entry_time": "2019-08-13T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-14T16:00:00+00:00",
+          "net_pnl": -0.5524959535
+        },
+        {
+          "entry_time": "2019-08-18T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-19T16:00:00+00:00",
+          "net_pnl": -0.7377708726
+        },
+        {
+          "entry_time": "2019-08-23T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-27T20:00:00+00:00",
+          "net_pnl": 0.0674608269
+        },
+        {
+          "entry_time": "2019-08-31T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-08T08:00:00+00:00",
+          "net_pnl": 2.1111031773
+        },
+        {
+          "entry_time": "2019-09-13T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-15T20:00:00+00:00",
+          "net_pnl": -0.2229057776
+        },
+        {
+          "entry_time": "2019-09-18T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-22T00:00:00+00:00",
+          "net_pnl": 0.1793737418
+        },
+        {
+          "entry_time": "2019-09-28T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-04T16:00:00+00:00",
+          "net_pnl": 0.3412838696
+        },
+        {
+          "entry_time": "2019-10-08T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-12T00:00:00+00:00",
+          "net_pnl": -0.6114760334
+        },
+        {
+          "entry_time": "2019-10-14T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-16T00:00:00+00:00",
+          "net_pnl": -0.5956529592
+        },
+        {
+          "entry_time": "2019-10-20T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-25T00:00:00+00:00",
+          "net_pnl": 0.1997372633
+        },
+        {
+          "entry_time": "2019-10-30T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-11-05T20:00:00+00:00",
+          "net_pnl": 0.8316875052
+        },
+        {
+          "entry_time": "2019-11-15T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-11-25T16:00:00+00:00",
+          "net_pnl": 1.2045072938
+        },
+        {
+          "entry_time": "2019-12-02T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-04T04:00:00+00:00",
+          "net_pnl": -0.177083039
+        },
+        {
+          "entry_time": "2019-12-05T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-08T12:00:00+00:00",
+          "net_pnl": -0.5015091213
+        },
+        {
+          "entry_time": "2019-12-08T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-10T20:00:00+00:00",
+          "net_pnl": -0.3037881476
+        },
+        {
+          "entry_time": "2019-12-16T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-20T00:00:00+00:00",
+          "net_pnl": -0.5800278035
+        },
+        {
+          "entry_time": "2019-12-22T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-23T16:00:00+00:00",
+          "net_pnl": -0.6379216537
+        },
+        {
+          "entry_time": "2020-01-05T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-01-06T08:00:00+00:00",
+          "net_pnl": -0.8966808697
+        },
+        {
+          "entry_time": "2020-01-13T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-01-16T00:00:00+00:00",
+          "net_pnl": -0.3935063365
+        },
+        {
+          "entry_time": "2020-01-27T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-01-30T08:00:00+00:00",
+          "net_pnl": -0.3449481296
+        },
+        {
+          "entry_time": "2020-01-31T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-02-02T12:00:00+00:00",
+          "net_pnl": -0.8499381837
+        },
+        {
+          "entry_time": "2020-02-05T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-02-11T04:00:00+00:00",
+          "net_pnl": 0.5271648344
+        },
+        {
+          "entry_time": "2020-02-23T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-02-25T16:00:00+00:00",
+          "net_pnl": -0.3380847257
+        },
+        {
+          "entry_time": "2020-03-03T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-03-06T00:00:00+00:00",
+          "net_pnl": -0.009068972
+        },
+        {
+          "entry_time": "2020-03-12T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-03-16T16:00:00+00:00",
+          "net_pnl": 0.0175256222
+        },
+        {
+          "entry_time": "2020-03-20T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-03-21T12:00:00+00:00",
+          "net_pnl": -0.9823768707
+        },
+        {
+          "entry_time": "2020-03-24T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-03-25T12:00:00+00:00",
+          "net_pnl": -0.7675385791
+        }
+      ]
+    },
+    "donchian_breakout|liquidate=true": {
+      "ending_equity": 991.4973619824,
+      "trades": [
+        {
+          "entry_time": "2018-01-09T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-01-11T16:00:00+00:00",
+          "net_pnl": -0.2947635799
+        },
+        {
+          "entry_time": "2018-01-16T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-01-21T04:00:00+00:00",
+          "net_pnl": 0.0418470412
+        },
+        {
+          "entry_time": "2018-01-31T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-02-04T00:00:00+00:00",
+          "net_pnl": -0.5693049725
+        },
+        {
+          "entry_time": "2018-02-07T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-02-08T20:00:00+00:00",
+          "net_pnl": -0.5616051538
+        },
+        {
+          "entry_time": "2018-02-18T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-02-22T00:00:00+00:00",
+          "net_pnl": 0.1935680095
+        },
+        {
+          "entry_time": "2018-02-26T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-02-27T20:00:00+00:00",
+          "net_pnl": -0.7605852144
+        },
+        {
+          "entry_time": "2018-03-07T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-03-11T08:00:00+00:00",
+          "net_pnl": -0.1350829038
+        },
+        {
+          "entry_time": "2018-03-14T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-03-15T12:00:00+00:00",
+          "net_pnl": -0.7548449096
+        },
+        {
+          "entry_time": "2018-03-17T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-03-20T00:00:00+00:00",
+          "net_pnl": -0.4284549534
+        },
+        {
+          "entry_time": "2018-03-22T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-03-25T04:00:00+00:00",
+          "net_pnl": -0.0407966163
+        },
+        {
+          "entry_time": "2018-04-05T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-10T04:00:00+00:00",
+          "net_pnl": -0.2486695581
+        },
+        {
+          "entry_time": "2018-04-13T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-16T12:00:00+00:00",
+          "net_pnl": -0.0552793596
+        },
+        {
+          "entry_time": "2018-04-19T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-21T16:00:00+00:00",
+          "net_pnl": -0.6348651845
+        },
+        {
+          "entry_time": "2018-05-15T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-05-21T08:00:00+00:00",
+          "net_pnl": 0.1516071784
+        },
+        {
+          "entry_time": "2018-05-25T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-06-01T12:00:00+00:00",
+          "net_pnl": 0.8102977296
+        },
+        {
+          "entry_time": "2018-06-09T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-06-15T00:00:00+00:00",
+          "net_pnl": -0.6529862749
+        },
+        {
+          "entry_time": "2018-06-19T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-06-23T08:00:00+00:00",
+          "net_pnl": -0.7713724383
+        },
+        {
+          "entry_time": "2018-07-08T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-07-18T00:00:00+00:00",
+          "net_pnl": 0.6028080258
+        },
+        {
+          "entry_time": "2018-07-23T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-07-25T12:00:00+00:00",
+          "net_pnl": -0.8802182432
+        },
+        {
+          "entry_time": "2018-08-16T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-08-22T00:00:00+00:00",
+          "net_pnl": 1.3915045408
+        },
+        {
+          "entry_time": "2018-08-24T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-08-26T00:00:00+00:00",
+          "net_pnl": -0.3838017564
+        },
+        {
+          "entry_time": "2018-09-01T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-09-04T00:00:00+00:00",
+          "net_pnl": -0.7673585635
+        },
+        {
+          "entry_time": "2018-09-05T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-09-21T08:00:00+00:00",
+          "net_pnl": 5.1444748706
+        },
+        {
+          "entry_time": "2018-09-29T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-01T00:00:00+00:00",
+          "net_pnl": -0.9245939057
+        },
+        {
+          "entry_time": "2018-10-04T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-09T04:00:00+00:00",
+          "net_pnl": -0.2104941194
+        },
+        {
+          "entry_time": "2018-10-13T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-22T12:00:00+00:00",
+          "net_pnl": 0.6146549242
+        },
+        {
+          "entry_time": "2018-10-25T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-05T12:00:00+00:00",
+          "net_pnl": 2.3077271326
+        },
+        {
+          "entry_time": "2018-11-08T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-10T12:00:00+00:00",
+          "net_pnl": -0.6985025273
+        },
+        {
+          "entry_time": "2018-11-20T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-23T04:00:00+00:00",
+          "net_pnl": -0.4012057862
+        },
+        {
+          "entry_time": "2018-11-24T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-26T12:00:00+00:00",
+          "net_pnl": -0.8787794303
+        },
+        {
+          "entry_time": "2018-12-04T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-12-06T12:00:00+00:00",
+          "net_pnl": -0.2440309995
+        },
+        {
+          "entry_time": "2018-12-12T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-12-13T16:00:00+00:00",
+          "net_pnl": -0.8304321402
+        },
+        {
+          "entry_time": "2018-12-18T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-12-22T00:00:00+00:00",
+          "net_pnl": 0.3563175897
+        },
+        {
+          "entry_time": "2018-12-25T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-12-28T12:00:00+00:00",
+          "net_pnl": -0.344270689
+        },
+        {
+          "entry_time": "2019-01-18T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-01-22T16:00:00+00:00",
+          "net_pnl": -0.382593265
+        },
+        {
+          "entry_time": "2019-02-01T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-02-07T16:00:00+00:00",
+          "net_pnl": 0.6555194841
+        },
+        {
+          "entry_time": "2019-03-01T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-03-04T12:00:00+00:00",
+          "net_pnl": 0.0339216803
+        },
+        {
+          "entry_time": "2019-03-08T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-03-09T20:00:00+00:00",
+          "net_pnl": -0.4803812083
+        },
+        {
+          "entry_time": "2019-03-10T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-03-10T12:00:00+00:00",
+          "net_pnl": -0.7554351019
+        },
+        {
+          "entry_time": "2019-03-15T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-03-22T12:00:00+00:00",
+          "net_pnl": 0.4504055078
+        },
+        {
+          "entry_time": "2019-03-24T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-03-27T16:00:00+00:00",
+          "net_pnl": 0.2240865321
+        },
+        {
+          "entry_time": "2019-04-05T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-04-11T00:00:00+00:00",
+          "net_pnl": 0.2761188231
+        },
+        {
+          "entry_time": "2019-04-13T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-04-16T16:00:00+00:00",
+          "net_pnl": 0.0222716648
+        },
+        {
+          "entry_time": "2019-05-05T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-05-06T20:00:00+00:00",
+          "net_pnl": -0.8860020497
+        },
+        {
+          "entry_time": "2019-05-10T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-05-11T16:00:00+00:00",
+          "net_pnl": -0.7254021099
+        },
+        {
+          "entry_time": "2019-05-16T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-05-19T08:00:00+00:00",
+          "net_pnl": -0.7591215382
+        },
+        {
+          "entry_time": "2019-05-22T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-05-25T00:00:00+00:00",
+          "net_pnl": -0.7617704693
+        },
+        {
+          "entry_time": "2019-05-28T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-05-29T00:00:00+00:00",
+          "net_pnl": -0.8864519977
+        },
+        {
+          "entry_time": "2019-06-05T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-06-08T16:00:00+00:00",
+          "net_pnl": -0.7499830604
+        },
+        {
+          "entry_time": "2019-06-13T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-06-16T00:00:00+00:00",
+          "net_pnl": -0.6577149873
+        },
+        {
+          "entry_time": "2019-06-28T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-07-03T04:00:00+00:00",
+          "net_pnl": -0.1672106801
+        },
+        {
+          "entry_time": "2019-07-15T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-07-21T20:00:00+00:00",
+          "net_pnl": 0.9328455842
+        },
+        {
+          "entry_time": "2019-07-26T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-07-29T16:00:00+00:00",
+          "net_pnl": -0.3442968506
+        },
+        {
+          "entry_time": "2019-08-02T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-08T00:00:00+00:00",
+          "net_pnl": 1.3389781555
+        },
+        {
+          "entry_time": "2019-08-13T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-14T16:00:00+00:00",
+          "net_pnl": -0.5524959535
+        },
+        {
+          "entry_time": "2019-08-18T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-19T16:00:00+00:00",
+          "net_pnl": -0.7377708726
+        },
+        {
+          "entry_time": "2019-08-23T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-27T20:00:00+00:00",
+          "net_pnl": 0.0674608269
+        },
+        {
+          "entry_time": "2019-08-31T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-08T08:00:00+00:00",
+          "net_pnl": 2.1111031773
+        },
+        {
+          "entry_time": "2019-09-13T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-15T20:00:00+00:00",
+          "net_pnl": -0.2229057776
+        },
+        {
+          "entry_time": "2019-09-18T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-22T00:00:00+00:00",
+          "net_pnl": 0.1793737418
+        },
+        {
+          "entry_time": "2019-09-28T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-04T16:00:00+00:00",
+          "net_pnl": 0.3412838696
+        },
+        {
+          "entry_time": "2019-10-08T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-12T00:00:00+00:00",
+          "net_pnl": -0.6114760334
+        },
+        {
+          "entry_time": "2019-10-14T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-16T00:00:00+00:00",
+          "net_pnl": -0.5956529592
+        },
+        {
+          "entry_time": "2019-10-20T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-25T00:00:00+00:00",
+          "net_pnl": 0.1997372633
+        },
+        {
+          "entry_time": "2019-10-30T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-11-05T20:00:00+00:00",
+          "net_pnl": 0.8316875052
+        },
+        {
+          "entry_time": "2019-11-15T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-11-25T16:00:00+00:00",
+          "net_pnl": 1.2045072938
+        },
+        {
+          "entry_time": "2019-12-02T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-04T04:00:00+00:00",
+          "net_pnl": -0.177083039
+        },
+        {
+          "entry_time": "2019-12-05T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-08T12:00:00+00:00",
+          "net_pnl": -0.5015091213
+        },
+        {
+          "entry_time": "2019-12-08T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-10T20:00:00+00:00",
+          "net_pnl": -0.3037881476
+        },
+        {
+          "entry_time": "2019-12-16T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-20T00:00:00+00:00",
+          "net_pnl": -0.5800278035
+        },
+        {
+          "entry_time": "2019-12-22T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-23T16:00:00+00:00",
+          "net_pnl": -0.6379216537
+        },
+        {
+          "entry_time": "2020-01-05T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-01-06T08:00:00+00:00",
+          "net_pnl": -0.8966808697
+        },
+        {
+          "entry_time": "2020-01-13T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-01-16T00:00:00+00:00",
+          "net_pnl": -0.3935063365
+        },
+        {
+          "entry_time": "2020-01-27T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-01-30T08:00:00+00:00",
+          "net_pnl": -0.3449481296
+        },
+        {
+          "entry_time": "2020-01-31T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-02-02T12:00:00+00:00",
+          "net_pnl": -0.8499381837
+        },
+        {
+          "entry_time": "2020-02-05T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-02-11T04:00:00+00:00",
+          "net_pnl": 0.5271648344
+        },
+        {
+          "entry_time": "2020-02-23T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-02-25T16:00:00+00:00",
+          "net_pnl": -0.3380847257
+        },
+        {
+          "entry_time": "2020-03-03T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-03-06T00:00:00+00:00",
+          "net_pnl": -0.009068972
+        },
+        {
+          "entry_time": "2020-03-12T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-03-16T16:00:00+00:00",
+          "net_pnl": 0.0175256222
+        },
+        {
+          "entry_time": "2020-03-20T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-03-21T12:00:00+00:00",
+          "net_pnl": -0.9823768707
+        },
+        {
+          "entry_time": "2020-03-24T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-03-25T12:00:00+00:00",
+          "net_pnl": -0.7675385791
+        }
+      ]
+    },
+    "donchian_regime_filter|liquidate=false": {
+      "ending_equity": 1000.6895537901,
+      "trades": [
+        {
+          "entry_time": "2018-02-18T00:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2018-02-18T16:00:00+00:00",
+          "net_pnl": -0.3705072801
+        },
+        {
+          "entry_time": "2018-02-19T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-02-22T00:00:00+00:00",
+          "net_pnl": -0.1777075895
+        },
+        {
+          "entry_time": "2018-03-22T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-03-25T04:00:00+00:00",
+          "net_pnl": -0.0407966163
+        },
+        {
+          "entry_time": "2018-04-05T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-10T04:00:00+00:00",
+          "net_pnl": -0.2486695581
+        },
+        {
+          "entry_time": "2018-04-13T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-16T12:00:00+00:00",
+          "net_pnl": -0.0552793596
+        },
+        {
+          "entry_time": "2018-04-19T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-21T16:00:00+00:00",
+          "net_pnl": -0.6348651845
+        },
+        {
+          "entry_time": "2018-05-30T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-06-01T12:00:00+00:00",
+          "net_pnl": -0.5577240446
+        },
+        {
+          "entry_time": "2018-09-05T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-09-21T08:00:00+00:00",
+          "net_pnl": 5.1444748706
+        },
+        {
+          "entry_time": "2018-09-29T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-01T00:00:00+00:00",
+          "net_pnl": -0.9245939057
+        },
+        {
+          "entry_time": "2018-10-04T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-09T04:00:00+00:00",
+          "net_pnl": -0.2104941194
+        },
+        {
+          "entry_time": "2018-10-13T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-22T12:00:00+00:00",
+          "net_pnl": 0.6146549242
+        },
+        {
+          "entry_time": "2018-10-25T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-05T12:00:00+00:00",
+          "net_pnl": 2.3077271326
+        },
+        {
+          "entry_time": "2018-11-08T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-10T12:00:00+00:00",
+          "net_pnl": -0.6985025273
+        },
+        {
+          "entry_time": "2018-11-20T16:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2018-11-20T20:00:00+00:00",
+          "net_pnl": -0.1946288062
+        },
+        {
+          "entry_time": "2018-11-21T00:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2018-11-21T08:00:00+00:00",
+          "net_pnl": -0.2982681386
+        },
+        {
+          "entry_time": "2018-11-22T08:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2018-11-23T00:00:00+00:00",
+          "net_pnl": -0.5203293765
+        },
+        {
+          "entry_time": "2018-11-24T12:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2018-11-25T20:00:00+00:00",
+          "net_pnl": -0.6717488413
+        },
+        {
+          "entry_time": "2019-04-05T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-04-11T00:00:00+00:00",
+          "net_pnl": 0.2761188231
+        },
+        {
+          "entry_time": "2019-04-13T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-04-16T16:00:00+00:00",
+          "net_pnl": 0.0222716648
+        },
+        {
+          "entry_time": "2019-07-29T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-07-29T16:00:00+00:00",
+          "net_pnl": -0.615750465
+        },
+        {
+          "entry_time": "2019-08-05T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-08T00:00:00+00:00",
+          "net_pnl": -0.3665398555
+        },
+        {
+          "entry_time": "2019-08-13T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-14T16:00:00+00:00",
+          "net_pnl": -0.5524959535
+        },
+        {
+          "entry_time": "2019-08-18T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-19T16:00:00+00:00",
+          "net_pnl": -0.7377708726
+        },
+        {
+          "entry_time": "2019-08-23T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-27T20:00:00+00:00",
+          "net_pnl": 0.0674608269
+        },
+        {
+          "entry_time": "2019-08-31T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-08T08:00:00+00:00",
+          "net_pnl": 2.1111031773
+        },
+        {
+          "entry_time": "2019-09-13T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-15T20:00:00+00:00",
+          "net_pnl": -0.2229057776
+        },
+        {
+          "entry_time": "2019-09-18T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-22T00:00:00+00:00",
+          "net_pnl": 0.1793737418
+        },
+        {
+          "entry_time": "2019-09-28T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-04T16:00:00+00:00",
+          "net_pnl": 0.3412838696
+        },
+        {
+          "entry_time": "2019-10-08T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-12T00:00:00+00:00",
+          "net_pnl": -0.6114760334
+        },
+        {
+          "entry_time": "2019-10-14T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-16T00:00:00+00:00",
+          "net_pnl": -0.5956529592
+        },
+        {
+          "entry_time": "2019-10-20T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-25T00:00:00+00:00",
+          "net_pnl": 0.1997372633
+        },
+        {
+          "entry_time": "2019-10-30T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-11-05T20:00:00+00:00",
+          "net_pnl": 0.8316875052
+        },
+        {
+          "entry_time": "2019-11-15T08:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2019-11-15T20:00:00+00:00",
+          "net_pnl": -0.273126465
+        },
+        {
+          "entry_time": "2019-11-17T00:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2019-11-18T04:00:00+00:00",
+          "net_pnl": -0.4953405898
+        },
+        {
+          "entry_time": "2019-11-18T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-11-25T16:00:00+00:00",
+          "net_pnl": 0.5014421005
+        },
+        {
+          "entry_time": "2019-12-02T00:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2019-12-04T04:00:00+00:00",
+          "net_pnl": -0.177083039
+        },
+        {
+          "entry_time": "2019-12-05T00:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2019-12-08T08:00:00+00:00",
+          "net_pnl": -0.3358841267
+        },
+        {
+          "entry_time": "2019-12-09T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-10T20:00:00+00:00",
+          "net_pnl": -0.4558419872
+        },
+        {
+          "entry_time": "2019-12-16T08:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2019-12-20T00:00:00+00:00",
+          "net_pnl": -0.5800278035
+        },
+        {
+          "entry_time": "2019-12-22T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-23T16:00:00+00:00",
+          "net_pnl": -0.6379216537
+        },
+        {
+          "entry_time": "2020-02-07T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-02-11T04:00:00+00:00",
+          "net_pnl": 0.3541508195
+        }
+      ]
+    },
+    "donchian_regime_filter|liquidate=true": {
+      "ending_equity": 1000.6895537901,
+      "trades": [
+        {
+          "entry_time": "2018-02-18T00:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2018-02-18T16:00:00+00:00",
+          "net_pnl": -0.3705072801
+        },
+        {
+          "entry_time": "2018-02-19T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-02-22T00:00:00+00:00",
+          "net_pnl": -0.1777075895
+        },
+        {
+          "entry_time": "2018-03-22T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-03-25T04:00:00+00:00",
+          "net_pnl": -0.0407966163
+        },
+        {
+          "entry_time": "2018-04-05T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-10T04:00:00+00:00",
+          "net_pnl": -0.2486695581
+        },
+        {
+          "entry_time": "2018-04-13T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-16T12:00:00+00:00",
+          "net_pnl": -0.0552793596
+        },
+        {
+          "entry_time": "2018-04-19T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-04-21T16:00:00+00:00",
+          "net_pnl": -0.6348651845
+        },
+        {
+          "entry_time": "2018-05-30T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-06-01T12:00:00+00:00",
+          "net_pnl": -0.5577240446
+        },
+        {
+          "entry_time": "2018-09-05T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-09-21T08:00:00+00:00",
+          "net_pnl": 5.1444748706
+        },
+        {
+          "entry_time": "2018-09-29T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-01T00:00:00+00:00",
+          "net_pnl": -0.9245939057
+        },
+        {
+          "entry_time": "2018-10-04T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-09T04:00:00+00:00",
+          "net_pnl": -0.2104941194
+        },
+        {
+          "entry_time": "2018-10-13T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-10-22T12:00:00+00:00",
+          "net_pnl": 0.6146549242
+        },
+        {
+          "entry_time": "2018-10-25T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-05T12:00:00+00:00",
+          "net_pnl": 2.3077271326
+        },
+        {
+          "entry_time": "2018-11-08T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2018-11-10T12:00:00+00:00",
+          "net_pnl": -0.6985025273
+        },
+        {
+          "entry_time": "2018-11-20T16:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2018-11-20T20:00:00+00:00",
+          "net_pnl": -0.1946288062
+        },
+        {
+          "entry_time": "2018-11-21T00:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2018-11-21T08:00:00+00:00",
+          "net_pnl": -0.2982681386
+        },
+        {
+          "entry_time": "2018-11-22T08:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2018-11-23T00:00:00+00:00",
+          "net_pnl": -0.5203293765
+        },
+        {
+          "entry_time": "2018-11-24T12:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2018-11-25T20:00:00+00:00",
+          "net_pnl": -0.6717488413
+        },
+        {
+          "entry_time": "2019-04-05T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-04-11T00:00:00+00:00",
+          "net_pnl": 0.2761188231
+        },
+        {
+          "entry_time": "2019-04-13T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-04-16T16:00:00+00:00",
+          "net_pnl": 0.0222716648
+        },
+        {
+          "entry_time": "2019-07-29T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-07-29T16:00:00+00:00",
+          "net_pnl": -0.615750465
+        },
+        {
+          "entry_time": "2019-08-05T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-08T00:00:00+00:00",
+          "net_pnl": -0.3665398555
+        },
+        {
+          "entry_time": "2019-08-13T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-14T16:00:00+00:00",
+          "net_pnl": -0.5524959535
+        },
+        {
+          "entry_time": "2019-08-18T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-19T16:00:00+00:00",
+          "net_pnl": -0.7377708726
+        },
+        {
+          "entry_time": "2019-08-23T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-08-27T20:00:00+00:00",
+          "net_pnl": 0.0674608269
+        },
+        {
+          "entry_time": "2019-08-31T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-08T08:00:00+00:00",
+          "net_pnl": 2.1111031773
+        },
+        {
+          "entry_time": "2019-09-13T00:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-15T20:00:00+00:00",
+          "net_pnl": -0.2229057776
+        },
+        {
+          "entry_time": "2019-09-18T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-09-22T00:00:00+00:00",
+          "net_pnl": 0.1793737418
+        },
+        {
+          "entry_time": "2019-09-28T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-04T16:00:00+00:00",
+          "net_pnl": 0.3412838696
+        },
+        {
+          "entry_time": "2019-10-08T08:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-12T00:00:00+00:00",
+          "net_pnl": -0.6114760334
+        },
+        {
+          "entry_time": "2019-10-14T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-16T00:00:00+00:00",
+          "net_pnl": -0.5956529592
+        },
+        {
+          "entry_time": "2019-10-20T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-10-25T00:00:00+00:00",
+          "net_pnl": 0.1997372633
+        },
+        {
+          "entry_time": "2019-10-30T16:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-11-05T20:00:00+00:00",
+          "net_pnl": 0.8316875052
+        },
+        {
+          "entry_time": "2019-11-15T08:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2019-11-15T20:00:00+00:00",
+          "net_pnl": -0.273126465
+        },
+        {
+          "entry_time": "2019-11-17T00:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2019-11-18T04:00:00+00:00",
+          "net_pnl": -0.4953405898
+        },
+        {
+          "entry_time": "2019-11-18T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-11-25T16:00:00+00:00",
+          "net_pnl": 0.5014421005
+        },
+        {
+          "entry_time": "2019-12-02T00:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2019-12-04T04:00:00+00:00",
+          "net_pnl": -0.177083039
+        },
+        {
+          "entry_time": "2019-12-05T00:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2019-12-08T08:00:00+00:00",
+          "net_pnl": -0.3358841267
+        },
+        {
+          "entry_time": "2019-12-09T20:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-10T20:00:00+00:00",
+          "net_pnl": -0.4558419872
+        },
+        {
+          "entry_time": "2019-12-16T08:00:00+00:00",
+          "exit_reason": "regime_filter_off",
+          "exit_time": "2019-12-20T00:00:00+00:00",
+          "net_pnl": -0.5800278035
+        },
+        {
+          "entry_time": "2019-12-22T12:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2019-12-23T16:00:00+00:00",
+          "net_pnl": -0.6379216537
+        },
+        {
+          "entry_time": "2020-02-07T04:00:00+00:00",
+          "exit_reason": "donchian_exit_breakdown",
+          "exit_time": "2020-02-11T04:00:00+00:00",
+          "net_pnl": 0.3541508195
+        }
+      ]
+    },
+    "ma_rsi_crossover|liquidate=false": {
+      "ending_equity": 996.1232736767,
+      "trades": [
+        {
+          "entry_time": "2018-01-09T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-12T00:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-01-16T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-19T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-01-25T12:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-01-25T20:00:00+00:00",
+          "net_pnl": -0.2794267666
+        },
+        {
+          "entry_time": "2018-01-28T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-29T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-01-31T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-31T16:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-02-08T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-09T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-02-12T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-13T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-02-16T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-19T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-02-27T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-28T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-03-07T16:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-03-12T00:00:00+00:00",
+          "net_pnl": -0.2534767953
+        },
+        {
+          "entry_time": "2018-03-29T04:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-03-30T08:00:00+00:00",
+          "net_pnl": -0.0260324616
+        },
+        {
+          "entry_time": "2018-03-31T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-31T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-04-05T08:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-04-11T00:00:00+00:00",
+          "net_pnl": -0.1148866192
+        },
+        {
+          "entry_time": "2018-04-14T00:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-15T12:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-04-18T04:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-04-22T12:00:00+00:00",
+          "net_pnl": -0.0219233374
+        },
+        {
+          "entry_time": "2018-05-02T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-05-02T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-05-06T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-05-07T20:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-05-13T00:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-05-13T12:00:00+00:00",
+          "net_pnl": -0.1144919684
+        },
+        {
+          "entry_time": "2018-05-14T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-05-19T08:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-05-25T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-05-29T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-06-10T12:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-06-15T16:00:00+00:00",
+          "net_pnl": -0.0562494566
+        },
+        {
+          "entry_time": "2018-06-20T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-06-21T20:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-06-25T00:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-06-25T08:00:00+00:00",
+          "net_pnl": -0.0538274227
+        },
+        {
+          "entry_time": "2018-07-08T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-07-11T04:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-08-08T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-08-08T16:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-08-12T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-08-12T04:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-08-16T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-08-17T20:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-08-24T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-08-26T00:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-09-01T08:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-09-04T16:00:00+00:00",
+          "net_pnl": -0.4075872075
+        },
+        {
+          "entry_time": "2018-09-06T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-09-07T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-09-25T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-09-25T16:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-09-29T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-09-30T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-10-05T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-10-08T08:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-11-08T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-11-09T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-11-19T08:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-11-24T04:00:00+00:00",
+          "net_pnl": 0.0682067
+        },
+        {
+          "entry_time": "2018-11-24T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-11-25T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-12-01T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-12-01T20:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-12-04T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-12-05T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-12-13T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-12-13T12:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-12-15T12:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-12-17T04:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-12-18T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-12-19T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-12-25T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-12-27T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-01-07T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-01-08T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-02-01T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-02-05T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-02-13T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-02-14T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-02-19T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-02-20T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-03-02T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-03-05T00:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-03-08T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-03-10T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-03-15T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-03-16T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-03-24T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-03-26T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-04-04T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-04-08T08:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-04-12T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-04-14T12:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-05-10T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-05-11T12:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2019-05-16T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-05-17T00:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2019-05-23T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-05-25T20:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-05-28T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-05-28T20:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-06-05T16:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2019-06-08T16:00:00+00:00",
+          "net_pnl": -0.4386682572
+        },
+        {
+          "entry_time": "2019-06-13T08:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2019-06-17T04:00:00+00:00",
+          "net_pnl": 0.2361167484
+        },
+        {
+          "entry_time": "2019-06-27T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-06-29T20:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-07-09T12:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-07-10T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-07-15T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-07-18T20:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-08-02T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-08-04T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-08-12T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-08-15T00:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2019-08-21T12:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-08-22T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-08-31T00:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-09-02T04:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-09-28T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-09-30T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-10-14T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-10-16T00:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2019-10-20T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-10-22T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-10-30T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-11-02T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-11-15T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-11-21T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-12-02T00:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-12-09T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-12-16T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-12-19T20:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-12-21T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-12-22T12:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2020-01-01T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-01-01T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-01-08T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-01-09T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-01-25T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-01-25T16:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-01-31T04:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2020-01-31T08:00:00+00:00",
+          "net_pnl": 0.0607608045
+        },
+        {
+          "entry_time": "2020-01-31T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-02-02T00:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2020-02-04T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2020-02-08T12:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2020-02-23T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-02-25T16:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-03-12T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2020-03-14T04:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2020-03-21T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-03-21T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-04-05T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-04-07T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        }
+      ]
+    },
+    "ma_rsi_crossover|liquidate=true": {
+      "ending_equity": 996.0643684354,
+      "trades": [
+        {
+          "entry_time": "2018-01-09T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-12T00:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-01-16T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-19T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-01-25T12:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-01-25T20:00:00+00:00",
+          "net_pnl": -0.2794267666
+        },
+        {
+          "entry_time": "2018-01-28T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-29T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-01-31T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-31T16:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-02-08T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-09T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-02-12T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-13T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-02-16T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-19T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-02-27T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-28T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-03-07T16:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-03-12T00:00:00+00:00",
+          "net_pnl": -0.2534767953
+        },
+        {
+          "entry_time": "2018-03-29T04:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-03-30T08:00:00+00:00",
+          "net_pnl": -0.0260324616
+        },
+        {
+          "entry_time": "2018-03-31T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-31T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-04-05T08:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-04-11T00:00:00+00:00",
+          "net_pnl": -0.1148866192
+        },
+        {
+          "entry_time": "2018-04-14T00:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-15T12:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-04-18T04:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-04-22T12:00:00+00:00",
+          "net_pnl": -0.0219233374
+        },
+        {
+          "entry_time": "2018-05-02T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-05-02T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-05-06T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-05-07T20:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-05-13T00:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-05-13T12:00:00+00:00",
+          "net_pnl": -0.1144919684
+        },
+        {
+          "entry_time": "2018-05-14T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-05-19T08:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-05-25T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-05-29T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-06-10T12:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-06-15T16:00:00+00:00",
+          "net_pnl": -0.0562494566
+        },
+        {
+          "entry_time": "2018-06-20T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-06-21T20:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-06-25T00:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-06-25T08:00:00+00:00",
+          "net_pnl": -0.0538274227
+        },
+        {
+          "entry_time": "2018-07-08T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-07-11T04:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-08-08T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-08-08T16:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-08-12T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-08-12T04:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-08-16T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-08-17T20:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-08-24T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-08-26T00:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-09-01T08:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-09-04T16:00:00+00:00",
+          "net_pnl": -0.4075872075
+        },
+        {
+          "entry_time": "2018-09-06T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-09-07T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-09-25T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-09-25T16:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-09-29T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-09-30T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-10-05T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-10-08T08:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-11-08T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-11-09T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-11-19T08:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2018-11-24T04:00:00+00:00",
+          "net_pnl": 0.0682067
+        },
+        {
+          "entry_time": "2018-11-24T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-11-25T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-12-01T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-12-01T20:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2018-12-04T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-12-05T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-12-13T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-12-13T12:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-12-15T12:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-12-17T04:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2018-12-18T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-12-19T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2018-12-25T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-12-27T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-01-07T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-01-08T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-02-01T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-02-05T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-02-13T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-02-14T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-02-19T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-02-20T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-03-02T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-03-05T00:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-03-08T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-03-10T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-03-15T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-03-16T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-03-24T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-03-26T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-04-04T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-04-08T08:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-04-12T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-04-14T12:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-05-10T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-05-11T12:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2019-05-16T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-05-17T00:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2019-05-23T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-05-25T20:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-05-28T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-05-28T20:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-06-05T16:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2019-06-08T16:00:00+00:00",
+          "net_pnl": -0.4386682572
+        },
+        {
+          "entry_time": "2019-06-13T08:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2019-06-17T04:00:00+00:00",
+          "net_pnl": 0.2361167484
+        },
+        {
+          "entry_time": "2019-06-27T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-06-29T20:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-07-09T12:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-07-10T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-07-15T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-07-18T20:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-08-02T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-08-04T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-08-12T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-08-15T00:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2019-08-21T12:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-08-22T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-08-31T00:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-09-02T04:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-09-28T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-09-30T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-10-14T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-10-16T00:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2019-10-20T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-10-22T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-10-30T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-11-02T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-11-15T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-11-21T00:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-12-02T00:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-12-09T16:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2019-12-16T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2019-12-19T20:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2019-12-21T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2019-12-22T12:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2020-01-01T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-01-01T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-01-08T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-01-09T04:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-01-25T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-01-25T16:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-01-31T04:00:00+00:00",
+          "exit_reason": "bearish_ma_crossover",
+          "exit_time": "2020-01-31T08:00:00+00:00",
+          "net_pnl": 0.0607608045
+        },
+        {
+          "entry_time": "2020-01-31T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-02-02T00:00:00+00:00",
+          "net_pnl": -0.5076285613
+        },
+        {
+          "entry_time": "2020-02-04T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2020-02-08T12:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2020-02-23T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-02-25T16:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-03-12T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2020-03-14T04:00:00+00:00",
+          "net_pnl": 0.685781935
+        },
+        {
+          "entry_time": "2020-03-21T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-03-21T08:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-04-05T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2020-04-07T12:00:00+00:00",
+          "net_pnl": -0.5076285612
+        },
+        {
+          "entry_time": "2020-04-12T20:00:00+00:00",
+          "exit_reason": "end_of_backtest",
+          "exit_time": "2020-04-13T08:00:00+00:00",
+          "net_pnl": -0.4156401326
+        }
+      ]
+    },
+    "short_term_donchian_30m|liquidate=false": {
+      "ending_equity": 970.3843021458,
+      "trades": [
+        {
+          "entry_time": "2018-01-01T21:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-01T21:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-01T23:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-02T01:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-03T03:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-03T03:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-04T11:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-04T12:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-04T12:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-04T14:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-04T17:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-04T17:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-04T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-04T19:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-04T21:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-04T21:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-04T23:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-04T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-05T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-05T01:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-05T01:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-05T01:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-05T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-05T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-05T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-05T14:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-06T17:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-06T17:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-06T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-06T18:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-07T09:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-07T09:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-07T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-07T23:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-08T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-08T17:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-08T17:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-08T20:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-08T21:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-08T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-08T22:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-08T23:00:00+00:00",
+          "net_pnl": 0.1894870869
+        },
+        {
+          "entry_time": "2018-01-08T23:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-08T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-09T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-09T00:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-09T07:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-09T07:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-10T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-10T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-11T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-11T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-12T04:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-12T04:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-12T07:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-12T07:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-12T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-12T09:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-12T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-12T13:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-12T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-12T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-13T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-13T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-13T13:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-13T14:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-13T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-13T15:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-13T20:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-13T21:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-14T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-14T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-14T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-14T15:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-14T19:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-14T21:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-14T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-14T21:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-14T22:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-14T22:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-14T23:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-15T00:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-15T00:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-15T02:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-15T03:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T03:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-15T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T09:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-15T10:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T10:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-15T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T11:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-15T18:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-15T18:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-15T18:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T18:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-15T21:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T22:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-16T03:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-16T05:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-16T06:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-16T06:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-17T02:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-17T02:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-17T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-17T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-17T06:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-17T06:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-17T09:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-17T09:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-17T16:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-17T18:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-18T22:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-18T23:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-21T01:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-21T02:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-21T03:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-21T03:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-21T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-21T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-21T08:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-21T10:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-21T10:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-21T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-22T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-22T20:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-22T20:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-22T22:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-22T22:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-22T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-23T00:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-23T01:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-23T13:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-23T14:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-23T15:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-23T16:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-24T19:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-24T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-25T07:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-25T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-25T13:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-25T13:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-27T02:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-27T03:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-27T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-27T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-27T07:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-27T07:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-27T10:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-27T11:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-27T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-27T12:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-27T15:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-27T17:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-27T17:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-27T17:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-29T19:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-29T21:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-29T21:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-29T22:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-30T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-30T17:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-30T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-30T19:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-31T21:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-31T21:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-01T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-01T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-01T17:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-01T18:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-01T18:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-01T18:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-01T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-01T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-01T23:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T01:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T02:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T03:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-02T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-02T05:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T06:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T07:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T08:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T08:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-02T08:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-02T10:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T12:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T12:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T14:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T14:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T15:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T15:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-02T16:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-02T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T22:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T23:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-02T23:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-03T04:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-03T05:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-03T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-03T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-03T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-03T12:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-03T21:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-03T21:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-04T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-04T04:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-04T05:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-04T05:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-05T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-05T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-05T23:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-05T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-06T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-06T00:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-06T01:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-06T01:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-06T08:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-06T09:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-06T10:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-06T10:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-06T19:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-06T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-06T22:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-06T22:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-07T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-07T12:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-08T10:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-08T10:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-12T06:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-12T06:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-12T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-12T08:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-12T17:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-12T17:30:00+00:00",
+          "net_pnl": 0.1964289597
+        },
+        {
+          "entry_time": "2018-02-14T05:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-14T06:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-14T07:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-14T07:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-14T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-14T08:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-14T19:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-14T19:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-14T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-14T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-15T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-15T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-15T05:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-15T05:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-15T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-15T18:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-15T20:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-15T22:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-16T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-16T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-17T03:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-17T04:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-17T05:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-17T05:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-17T10:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-17T10:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-17T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-17T13:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-17T16:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-17T16:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-17T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-17T20:00:00+00:00",
+          "net_pnl": -0.2789953542
+        },
+        {
+          "entry_time": "2018-02-19T02:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-19T03:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-19T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-19T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-19T07:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-19T11:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-19T12:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-19T12:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-19T17:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-19T19:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-20T01:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-20T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-20T07:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-20T07:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-20T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-20T10:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-20T20:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-20T21:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-20T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-20T23:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-20T23:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-21T00:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-21T00:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-21T00:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-21T08:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-21T08:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-21T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-21T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-21T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-21T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-22T00:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-22T01:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-22T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-22T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-22T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-22T11:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-22T14:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-22T14:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-22T14:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-22T15:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-23T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-23T18:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-24T09:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-24T09:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-24T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-24T11:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-25T05:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-25T09:00:00+00:00",
+          "net_pnl": -0.2929335509
+        },
+        {
+          "entry_time": "2018-02-25T16:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-25T17:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-25T17:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-25T17:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-26T07:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-26T07:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-26T10:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-26T11:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-26T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-26T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-27T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-27T04:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-01T17:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-01T18:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-01T19:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-01T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-01T23:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-01T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-02T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-02T00:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-03T13:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-03T14:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-03T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-03T17:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-04T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-04T22:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-04T22:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-04T23:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-05T20:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-05T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-06T10:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-06T11:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-06T17:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-06T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-06T23:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-07T00:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-07T01:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-07T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-07T03:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-07T05:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-07T06:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-07T07:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-08T05:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-08T07:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-08T07:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-08T07:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-10T12:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-10T13:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-10T14:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-10T14:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-10T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-10T15:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-10T16:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-10T16:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-10T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-10T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-10T18:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-10T18:30:00+00:00",
+          "net_pnl": 0.1962929828
+        },
+        {
+          "entry_time": "2018-03-10T19:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-10T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-12T02:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-12T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-12T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-12T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-12T08:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-12T08:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-14T07:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-14T08:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-14T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-14T16:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-15T05:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-15T05:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-16T15:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-16T15:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-16T15:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-16T15:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-16T18:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-16T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-17T18:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-17T18:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-19T07:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-19T07:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-20T00:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-20T01:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-20T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-20T03:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-20T07:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-20T08:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-20T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-20T12:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-20T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-20T15:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-21T22:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-21T22:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-21T23:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-22T00:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-22T01:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-22T03:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-22T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-22T04:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-22T04:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-22T04:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-23T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-23T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-23T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-23T19:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-23T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-23T22:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-23T23:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-23T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-24T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-24T01:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-24T02:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-24T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-24T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-24T16:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-25T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-25T15:00:00+00:00",
+          "net_pnl": 0.1924225806
+        },
+        {
+          "entry_time": "2018-03-25T15:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-25T16:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-26T06:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-26T08:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-26T08:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-26T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-26T10:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-26T10:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-26T11:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-26T12:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-26T13:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-26T13:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-27T08:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-27T10:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-27T10:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-27T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-27T14:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-27T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-28T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-28T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-30T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-30T20:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-31T15:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-31T15:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-31T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-31T16:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-31T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-31T21:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-31T22:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-31T22:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-01T05:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-01T05:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-01T08:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-01T11:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-01T11:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-01T12:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-01T13:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-01T14:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-01T15:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-01T16:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-01T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-01T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-02T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-02T01:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-02T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-02T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-03T02:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-03T02:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-03T13:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-03T14:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-03T17:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-03T17:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-03T23:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-03T23:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-04T06:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-04T06:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-04T08:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-04T08:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-04T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-04T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-04T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-04T22:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-04T22:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-04T22:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-05T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-05T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-05T18:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-05T18:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-05T19:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-05T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-05T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-05T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-06T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-06T12:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-07T02:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-07T03:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-07T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-07T04:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-07T06:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-07T07:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-08T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-08T12:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-09T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-09T02:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-10T04:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-10T05:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-10T06:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-10T06:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-11T02:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-11T04:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-11T04:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-11T04:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-11T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-11T19:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-12T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-12T00:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-12T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-12T02:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-12T05:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-12T05:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-12T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-12T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        }
+      ]
+    },
+    "short_term_donchian_30m|liquidate=true": {
+      "ending_equity": 970.3843021458,
+      "trades": [
+        {
+          "entry_time": "2018-01-01T21:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-01T21:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-01T23:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-02T01:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-03T03:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-03T03:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-04T11:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-04T12:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-04T12:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-04T14:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-04T17:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-04T17:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-04T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-04T19:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-04T21:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-04T21:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-04T23:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-04T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-05T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-05T01:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-05T01:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-05T01:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-05T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-05T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-05T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-05T14:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-06T17:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-06T17:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-06T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-06T18:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-07T09:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-07T09:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-07T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-07T23:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-08T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-08T17:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-08T17:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-08T20:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-08T21:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-08T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-08T22:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-08T23:00:00+00:00",
+          "net_pnl": 0.1894870869
+        },
+        {
+          "entry_time": "2018-01-08T23:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-08T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-09T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-09T00:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-09T07:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-09T07:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-10T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-10T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-11T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-11T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-12T04:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-12T04:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-12T07:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-12T07:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-12T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-12T09:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-12T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-12T13:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-12T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-12T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-13T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-13T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-13T13:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-13T14:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-13T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-13T15:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-13T20:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-13T21:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-14T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-14T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-14T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-14T15:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-14T19:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-14T21:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-14T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-14T21:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-14T22:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-14T22:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-14T23:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-15T00:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-15T00:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-15T02:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-15T03:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T03:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-15T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T09:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-15T10:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T10:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-15T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T11:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-15T18:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-15T18:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-15T18:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T18:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-15T21:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-15T22:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-16T03:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-16T05:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-16T06:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-16T06:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-17T02:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-17T02:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-17T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-17T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-17T06:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-17T06:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-17T09:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-17T09:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-17T16:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-17T18:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-18T22:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-18T23:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-21T01:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-21T02:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-21T03:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-21T03:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-21T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-21T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-21T08:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-21T10:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-21T10:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-21T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-22T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-22T20:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-22T20:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-22T22:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-22T22:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-22T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-23T00:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-23T01:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-23T13:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-23T14:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-23T15:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-23T16:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-24T19:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-24T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-25T07:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-25T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-25T13:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-25T13:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-27T02:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-27T03:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-27T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-27T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-27T07:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-27T07:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-27T10:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-27T11:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-27T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-27T12:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-27T15:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-27T17:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-27T17:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-27T17:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-29T19:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-29T21:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-29T21:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-29T22:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-30T16:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-01-30T17:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-01-30T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-30T19:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-01-31T21:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-01-31T21:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-01T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-01T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-01T17:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-01T18:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-01T18:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-01T18:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-01T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-01T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-01T23:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T01:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T02:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T03:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-02T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-02T05:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T06:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T07:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T08:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T08:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-02T08:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-02T10:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T12:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T12:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T14:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T14:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T15:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T15:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-02T16:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-02T20:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-02T22:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-02T23:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-02T23:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-03T04:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-03T05:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-03T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-03T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-03T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-03T12:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-03T21:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-03T21:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-04T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-04T04:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-04T05:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-04T05:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-05T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-05T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-05T23:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-05T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-06T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-06T00:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-06T01:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-06T01:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-06T08:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-06T09:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-06T10:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-06T10:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-06T19:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-06T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-06T22:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-06T22:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-07T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-07T12:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-08T10:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-08T10:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-12T06:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-12T06:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-12T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-12T08:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-12T17:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-12T17:30:00+00:00",
+          "net_pnl": 0.1964289597
+        },
+        {
+          "entry_time": "2018-02-14T05:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-14T06:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-14T07:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-14T07:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-14T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-14T08:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-14T19:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-14T19:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-14T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-14T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-15T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-15T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-15T05:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-15T05:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-15T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-15T18:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-15T20:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-15T22:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-16T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-16T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-17T03:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-17T04:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-17T05:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-17T05:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-17T10:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-17T10:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-17T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-17T13:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-17T16:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-17T16:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-17T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-17T20:00:00+00:00",
+          "net_pnl": -0.2789953542
+        },
+        {
+          "entry_time": "2018-02-19T02:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-19T03:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-19T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-19T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-19T07:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-19T11:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-19T12:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-19T12:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-19T17:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-19T19:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-20T01:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-20T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-20T07:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-20T07:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-20T08:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-20T10:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-20T20:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-20T21:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-20T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-20T23:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-20T23:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-21T00:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-21T00:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-21T00:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-21T08:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-21T08:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-21T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-21T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-21T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-21T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-22T00:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-22T01:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-22T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-22T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-22T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-22T11:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-22T14:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-22T14:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-22T14:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-22T15:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-23T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-23T18:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-24T09:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-24T09:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-24T11:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-24T11:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-25T05:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-25T09:00:00+00:00",
+          "net_pnl": -0.2929335509
+        },
+        {
+          "entry_time": "2018-02-25T16:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-02-25T17:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-02-25T17:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-25T17:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-26T07:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-26T07:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-26T10:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-26T11:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-26T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-26T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-02-27T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-02-27T04:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-01T17:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-01T18:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-01T19:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-01T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-01T23:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-01T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-02T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-02T00:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-03T13:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-03T14:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-03T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-03T17:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-04T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-04T22:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-04T22:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-04T23:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-05T20:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-05T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-06T10:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-06T11:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-06T17:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-06T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-06T23:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-07T00:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-07T01:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-07T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-07T03:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-07T05:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-07T06:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-07T07:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-08T05:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-08T07:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-08T07:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-08T07:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-10T12:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-10T13:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-10T14:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-10T14:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-10T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-10T15:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-10T16:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-10T16:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-10T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-10T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-10T18:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-10T18:30:00+00:00",
+          "net_pnl": 0.1962929828
+        },
+        {
+          "entry_time": "2018-03-10T19:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-10T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-12T02:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-12T03:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-12T04:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-12T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-12T08:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-12T08:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-14T07:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-14T08:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-14T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-14T16:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-15T05:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-15T05:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-16T15:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-16T15:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-16T15:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-16T15:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-16T18:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-16T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-17T18:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-17T18:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-19T07:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-19T07:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-20T00:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-20T01:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-20T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-20T03:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-20T07:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-20T08:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-20T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-20T12:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-20T15:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-20T15:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-21T22:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-21T22:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-21T23:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-22T00:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-22T01:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-22T03:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-22T04:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-22T04:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-22T04:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-22T04:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-23T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-23T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-23T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-23T19:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-23T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-23T22:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-23T23:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-23T23:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-24T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-24T01:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-24T02:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-24T04:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-24T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-24T16:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-25T12:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-25T15:00:00+00:00",
+          "net_pnl": 0.1924225806
+        },
+        {
+          "entry_time": "2018-03-25T15:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-25T16:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-26T06:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-26T08:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-26T08:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-26T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-26T10:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-26T10:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-26T11:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-26T12:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-26T13:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-26T13:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-27T08:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-27T10:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-27T10:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-27T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-27T14:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-27T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-28T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-28T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-30T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-30T20:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-31T15:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-31T15:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-31T16:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-31T16:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-03-31T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-03-31T21:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-03-31T22:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-03-31T22:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-01T05:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-01T05:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-01T08:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-01T11:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-01T11:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-01T12:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-01T13:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-01T14:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-01T15:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-01T16:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-01T17:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-01T17:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-02T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-02T01:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-02T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-02T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-03T02:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-03T02:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-03T13:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-03T14:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-03T17:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-03T17:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-03T23:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-03T23:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-04T06:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-04T06:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-04T08:00:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-04T08:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-04T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-04T11:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-04T21:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-04T22:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-04T22:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-04T22:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-05T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-05T02:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-05T18:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-05T18:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-05T19:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-05T19:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-05T20:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-05T21:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-06T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-06T12:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-07T02:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-07T03:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-07T03:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-07T04:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-07T06:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-07T07:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-08T11:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-08T12:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-09T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-09T02:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-10T04:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-10T05:30:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-10T06:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-10T06:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-11T02:30:00+00:00",
+          "exit_reason": "take_profit",
+          "exit_time": "2018-04-11T04:00:00+00:00",
+          "net_pnl": 0.1885275616
+        },
+        {
+          "entry_time": "2018-04-11T04:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-11T04:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-11T18:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-11T19:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-12T00:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-12T00:00:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-12T02:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-12T02:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-12T05:30:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-12T05:30:00+00:00",
+          "net_pnl": -0.2590013745
+        },
+        {
+          "entry_time": "2018-04-12T09:00:00+00:00",
+          "exit_reason": "stop_loss",
+          "exit_time": "2018-04-12T09:00:00+00:00",
+          "net_pnl": -0.2590013745
+        }
+      ]
+    }
+  },
+  "source_head": "3eec069"
+}

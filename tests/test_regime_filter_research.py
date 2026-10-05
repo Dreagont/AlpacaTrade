@@ -13,6 +13,12 @@ import backtest
 import regime_filter_research as experiment
 
 
+def _research_strategy(name):
+    if name == "regime_only_4h":
+        return experiment.create_regime_only_strategy()
+    return experiment.get_strategy(name)
+
+
 class RegimeFilterResearchTests(unittest.TestCase):
     def test_default_cli_values_and_help_options(self):
         args = experiment._build_parser().parse_args([])
@@ -43,7 +49,7 @@ class RegimeFilterResearchTests(unittest.TestCase):
         block_days, blocks = 1, 2
         oldest = aligned - timedelta(days=block_days * blocks)
         required = max(
-            backtest.required_warmup_bars(strategy=experiment.get_strategy(name))
+            backtest.required_warmup_bars(strategy=_research_strategy(name))
             for name in experiment.STRATEGIES
         )
         index = pd.date_range(
@@ -83,27 +89,42 @@ class RegimeFilterResearchTests(unittest.TestCase):
         self.assertEqual(fetch.call_args.args[:2], (2, "4Hour"))
         self.assertEqual(fetch.call_args.kwargs["warmup_bars"], required)
         self.assertEqual(fetch.call_args.kwargs["end_time"], aligned)
-        self.assertEqual(run.call_count, 3)
+        self.assertEqual(run.call_count, 4)
+        self.assertTrue(all(call.args[0] is bars for call in run.call_args_list))
         self.assertTrue(all(call.kwargs["liquidate_at_end"] is False for call in run.call_args_list))
-        self.assertEqual(len(rows), 2 * len(experiment.STRATEGIES))
+        block_rows = [row for row in rows if row["row_type"] == "BLOCK"]
+        total_rows = [row for row in rows if row["row_type"] == "TOTAL"]
+        self.assertEqual(len(block_rows), 2 * len(experiment.STRATEGIES))
+        self.assertEqual(len(total_rows), len(experiment.STRATEGIES))
         self.assertEqual(len(saved), len(rows))
         self.assertEqual(
-            [(row["block_index"], row["strategy_name"]) for row in rows],
+            [(row["block_index"], row["strategy_name"]) for row in block_rows],
             [(block, strategy) for block in (1, 2) for strategy in experiment.STRATEGIES],
         )
-        filtered = [row for row in rows if row["strategy_name"] == "donchian_regime_filter"]
+        self.assertTrue(all(row["row_type"] == "BLOCK" for row in saved[:len(block_rows)]))
+        filtered = [
+            row for row in block_rows
+            if row["strategy_name"] == "donchian_regime_filter"
+        ]
         self.assertTrue(all(row["bullish_bar_count"] == 0 for row in filtered))
         self.assertEqual([row["non_bullish_bar_count"] for row in filtered], [5, 6])
         self.assertTrue(all(row["bullish_bar_percent"] == 0 for row in filtered))
         self.assertTrue(all(row["error"] == "" for row in rows))
-        self.assertEqual([row["expected_candle_count"] for row in rows[:3]], [6] * 3)
-        self.assertEqual([row["actual_candle_count"] for row in rows[:3]], [5] * 3)
-        self.assertEqual([row["missing_candle_count"] for row in rows[:3]], [1] * 3)
-        self.assertEqual([row["expected_candle_count"] for row in rows[3:]], [6] * 3)
-        self.assertEqual([row["actual_candle_count"] for row in rows[3:]], [6] * 3)
-        self.assertEqual([row["missing_candle_count"] for row in rows[3:]], [0] * 3)
+        self.assertEqual([row["expected_candle_count"] for row in block_rows[:4]], [6] * 4)
+        self.assertEqual([row["actual_candle_count"] for row in block_rows[:4]], [5] * 4)
+        self.assertEqual([row["missing_candle_count"] for row in block_rows[:4]], [1] * 4)
+        self.assertEqual([row["expected_candle_count"] for row in block_rows[4:]], [6] * 4)
+        self.assertEqual([row["actual_candle_count"] for row in block_rows[4:]], [6] * 4)
+        self.assertEqual([row["missing_candle_count"] for row in block_rows[4:]], [0] * 4)
+        self.assertTrue(all(row["pnl_percent_of_notional"] is not None for row in block_rows))
+        self.assertTrue(all(row["max_drawdown_percent_of_notional"] is not None for row in block_rows))
+        self.assertTrue(all(row["compounded_trade_return_percent"] is None for row in block_rows))
+        self.assertTrue(all(row["compounded_trade_return_percent"] is not None for row in total_rows))
+        self.assertTrue(all(row["btc_buy_hold_return_after_costs_percent"] is not None for row in total_rows))
         report = console.getvalue()
-        self.assertIn("FILTER DELTA:", report)
+        self.assertIn("FILTER DELTA (filtered - plain Donchian):", report)
+        self.assertIn("FILTERED MINUS REGIME-ONLY:", report)
+        self.assertIn("TOTAL COMPARISON", report)
         self.assertIn("POST-HOC BTC-positive", report)
         self.assertIn("in-sample evidence", report)
         self.assertIn("displayed blocks summarize the historical period in this run", report)
@@ -117,7 +138,7 @@ class RegimeFilterResearchTests(unittest.TestCase):
         block_days, blocks = 1, 2
         oldest = aligned - timedelta(days=2)
         required = max(
-            backtest.required_warmup_bars(strategy=experiment.get_strategy(name))
+            backtest.required_warmup_bars(strategy=_research_strategy(name))
             for name in experiment.STRATEGIES
         )
         values = [100.0] * required + [101.0 + n for n in range(12)]
@@ -140,7 +161,11 @@ class RegimeFilterResearchTests(unittest.TestCase):
                 block_days=block_days, blocks=blocks, timeframe="4Hour",
                 output=None, research_end_time=aligned, starting_capital=1000,
             )
-        filtered = [row for row in rows if row["strategy_name"] == "donchian_regime_filter"]
+        filtered = [
+            row for row in rows
+            if row["row_type"] == "BLOCK"
+            and row["strategy_name"] == "donchian_regime_filter"
+        ]
         self.assertEqual(len(filtered), 2)
         self.assertGreater(filtered[0]["ending_equity"], filtered[0]["starting_equity"])
         self.assertAlmostEqual(filtered[1]["starting_equity"], filtered[0]["ending_equity"])

@@ -288,6 +288,43 @@ def create_regime_filtered_donchian_strategy(
     )
 
 
+def create_regime_only_strategy() -> StrategySpec:
+    """Create the frozen 4Hour regime-only strategy for research experiments."""
+    sma_period = 200
+    slope_lookback = 20
+
+    def prepare(df):
+        return calculate_regime_filter(
+            df, sma_period=sma_period, slope_lookback=slope_lookback
+        )
+
+    def decide(prepared_df, index):
+        if index < 0 or index >= len(prepared_df):
+            return Decision("HOLD", "regime_filter_not_ready")
+        regime = prepared_df.iloc[index].get("regime_bullish")
+        if regime is None or regime is pd.NA or pd.isna(regime):
+            return Decision("HOLD", "regime_filter_not_ready")
+        if bool(regime):
+            return Decision("BUY", "regime_on")
+        return Decision("SELL", "regime_filter_off")
+
+    return StrategySpec(
+        name="regime_only_4h",
+        _prepare_indicators=prepare,
+        _decide_at=decide,
+        _warmup_lookback=lambda: sma_period + slope_lookback,
+        _parameters=lambda: {
+            "regime_sma_period": sma_period,
+            "regime_slope_lookback": slope_lookback,
+            "stop_loss_percent": None,
+            "take_profit_percent": None,
+            "max_holding_minutes": None,
+        },
+        _stop_loss=lambda: None,
+        _take_profit=lambda: None,
+    )
+
+
 DONCHIAN_BREAKOUT = create_donchian_breakout_strategy()
 DONCHIAN_REGIME_FILTER = create_regime_filtered_donchian_strategy()
 STRATEGY_REGISTRY = {
