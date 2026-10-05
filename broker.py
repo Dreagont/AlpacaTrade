@@ -27,12 +27,14 @@ class OrderOutcome(str, Enum):
     TIMEOUT_PENDING = "timeout_pending"
     PARTIAL_PENDING = "partial_pending"
     PENDING = "pending"
+    RATE_LIMITED = "rate_limited"
 
 
 class SubmissionFailureKind(str, Enum):
     DEFINITIVE_REJECTION = "definitive_rejection"
     AMBIGUOUS_SUBMISSION = "ambiguous_submission"
     RETRYABLE_TRANSPORT_ERROR = "retryable_transport_error"
+    RATE_LIMITED = "rate_limited"
 
 
 class PositionLookupStatus(str, Enum):
@@ -102,9 +104,10 @@ class OrderFillTimeoutError(TimeoutError):
 def classify_submission_exception(error: Exception) -> SubmissionFailureKind:
     """Classify whether a failed submit definitively created no broker order.
 
-    Alpaca validation/auth 4xx responses are definitive rejections. HTTP 408 is
-    ambiguous because the server may have accepted the request before timing out;
-    5xx and transport failures are reconciled by client_order_id before any retry.
+    Alpaca validation/auth 4xx responses are definitive rejections. HTTP 429 is
+    retryable after a cooldown; HTTP 408 is ambiguous because the server may have
+    accepted the request before timing out. 5xx and transport failures are
+    reconciled by client_order_id before any retry.
     """
     status_code = getattr(error, "status_code", None)
     try:
@@ -112,6 +115,8 @@ def classify_submission_exception(error: Exception) -> SubmissionFailureKind:
     except (TypeError, ValueError):
         status_code = None
     if status_code is not None and 400 <= status_code < 500 and status_code != 408:
+        if status_code == 429:
+            return SubmissionFailureKind.RATE_LIMITED
         return SubmissionFailureKind.DEFINITIVE_REJECTION
     if isinstance(error, (TimeoutError, ConnectionError, OSError)):
         return SubmissionFailureKind.RETRYABLE_TRANSPORT_ERROR

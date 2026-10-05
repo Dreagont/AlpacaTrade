@@ -248,15 +248,10 @@ def create_regime_filtered_donchian_strategy(
         if index < 0 or index >= len(prepared_df):
             return Decision("HOLD", "regime_filter_not_ready")
         row = prepared_df.iloc[index]
-        needed = (
-            row.get("close"),
-            row.get("donchian_entry_high"),
-            row.get("donchian_exit_low"),
-            row.get("regime_sma"),
-            row.get("regime_sma_previous"),
-        )
         try:
-            if not all(isfinite(float(value)) for value in needed):
+            if not all(isfinite(float(row.get(name))) for name in (
+                "regime_sma", "regime_sma_previous",
+            )):
                 return Decision("HOLD", "regime_filter_not_ready")
             regime = row.get("regime_bullish")
             if regime is None or regime is pd.NA or pd.isna(regime):
@@ -266,30 +261,6 @@ def create_regime_filtered_donchian_strategy(
 
         if not bool(regime):
             return Decision("SELL", "regime_filter_off")
-
-        previous_regime = (
-            prepared_df.iloc[index - 1].get("regime_bullish") if index > 0 else pd.NA
-        )
-        previous_ready = previous_regime is not pd.NA and not pd.isna(previous_regime)
-        if not previous_ready or not bool(previous_regime):
-            if index == 0:
-                return Decision("HOLD", "await_fresh_donchian_breakout")
-            previous = prepared_df.iloc[index - 1]
-            prior_values = (previous.get("close"), previous.get("donchian_entry_high"))
-            try:
-                prior_ready = all(isfinite(float(value)) for value in prior_values)
-            except (TypeError, ValueError):
-                prior_ready = False
-            fresh_breakout = (
-                prior_ready
-                and float(previous["close"]) <= float(previous["donchian_entry_high"])
-                and float(row["close"]) > float(row["donchian_entry_high"])
-            )
-            return (
-                Decision("BUY", "donchian_entry_breakout")
-                if fresh_breakout
-                else Decision("HOLD", "await_fresh_donchian_breakout")
-            )
         return _donchian_decide_at(prepared_df, index)
 
     def parameters():

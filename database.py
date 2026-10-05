@@ -64,7 +64,8 @@ def _create_tables(connection: sqlite3.Connection) -> None:
             reconcile_attempts INTEGER DEFAULT 0,
             last_reconcile_at TEXT,
             position_before_quantity REAL,
-            order_role TEXT
+            order_role TEXT,
+            candle_timestamp TEXT
         )
         """
     )
@@ -92,6 +93,7 @@ def _create_tables(connection: sqlite3.Connection) -> None:
         ("last_reconcile_at", "TEXT"),
         ("position_before_quantity", "REAL"),
         ("order_role", "TEXT"),
+        ("candle_timestamp", "TEXT"),
     ):
         if name not in columns:
             connection.execute(f"ALTER TABLE orders ADD COLUMN {name} {declaration}")
@@ -241,6 +243,7 @@ def upsert_order(
     last_reconcile_at: Optional[str] = None,
     position_before_quantity: Optional[float] = None,
     order_role: Optional[str] = None,
+    candle_timestamp: Optional[str] = None,
 ) -> None:
     timestamp = timestamp or datetime.now(timezone.utc).isoformat()
     created_at = created_at or timestamp
@@ -270,6 +273,7 @@ def upsert_order(
                 last_reconcile_at,
                 position_before_quantity,
                 order_role,
+                candle_timestamp,
             )
             if client_order_id is not None:
                 connection.execute(
@@ -284,7 +288,8 @@ def upsert_order(
                         reconcile_attempts=COALESCE(?, reconcile_attempts),
                         last_reconcile_at=COALESCE(?, last_reconcile_at),
                         position_before_quantity=COALESCE(?, position_before_quantity),
-                        order_role=COALESCE(?, order_role)
+                        order_role=COALESCE(?, order_role),
+                        candle_timestamp=COALESCE(?, candle_timestamp)
                     WHERE client_order_id=?
                     """,
                     (
@@ -298,6 +303,7 @@ def upsert_order(
                         last_reconcile_at,
                         position_before_quantity,
                         order_role,
+                        candle_timestamp,
                         client_order_id,
                     ),
                 )
@@ -311,8 +317,8 @@ def upsert_order(
                     client_order_id, strategy_name, strategy_parameters_json,
                     asset_quantity_delta, submission_kind, created_at,
                     reconcile_attempts, last_reconcile_at,
-                    position_before_quantity, order_role
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    position_before_quantity, order_role, candle_timestamp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(order_id) WHERE order_id IS NOT NULL DO UPDATE SET
                     timestamp=excluded.timestamp,
                     symbol=excluded.symbol,
@@ -332,7 +338,8 @@ def upsert_order(
                     reconcile_attempts=COALESCE(excluded.reconcile_attempts, orders.reconcile_attempts),
                     last_reconcile_at=COALESCE(excluded.last_reconcile_at, orders.last_reconcile_at),
                     position_before_quantity=COALESCE(excluded.position_before_quantity, orders.position_before_quantity),
-                    order_role=COALESCE(excluded.order_role, orders.order_role)
+                    order_role=COALESCE(excluded.order_role, orders.order_role),
+                    candle_timestamp=COALESCE(excluded.candle_timestamp, orders.candle_timestamp)
                 """,
                 values,
             )
@@ -363,6 +370,7 @@ def get_order_records(*, pending_only: bool = False) -> list[dict]:
                 "accepted",
                 "pending_new",
                 "pending_cancel",
+                "submission_intent",
             )
             placeholders = ",".join("?" for _ in statuses)
             rows = connection.execute(
@@ -436,7 +444,7 @@ def get_bot_owned_btc_quantity() -> tuple[float, bool]:
 
 
 def note_synthetic_order_reconciliation(client_order_id: str) -> dict | None:
-    """Record one confirmed not-found lookup for an ambiguous synthetic order."""
+    """Record a confirmed not-found lookup for an ambiguous order or BUY intent."""
     now = datetime.now(timezone.utc).isoformat()
     connection = sqlite3.connect(config.DATABASE_PATH, timeout=5)
     try:
@@ -444,16 +452,16 @@ def note_synthetic_order_reconciliation(client_order_id: str) -> dict | None:
             _create_tables(connection)
             connection.execute(
                 "UPDATE orders SET reconcile_attempts=COALESCE(reconcile_attempts, 0)+1, "
-                "last_reconcile_at=? WHERE client_order_id=? "
-                "AND submission_kind='synthetic_ambiguous' "
-                "AND order_status='submit_unknown'",
+                "last_reconcile_at=? WHERE client_order_id=? AND ("
+                "(submission_kind='synthetic_ambiguous' AND order_status='submit_unknown') "
+                "OR (submission_kind='entry_intent' AND order_status='submission_intent'))",
                 (now, client_order_id),
             )
             row = connection.execute(
                 "SELECT created_at, reconcile_attempts, last_reconcile_at "
                 "FROM orders WHERE client_order_id=? "
-                "AND submission_kind='synthetic_ambiguous' "
-                "AND order_status='submit_unknown'",
+                "AND ((submission_kind='synthetic_ambiguous' AND order_status='submit_unknown') "
+                "OR (submission_kind='entry_intent' AND order_status='submission_intent'))",
                 (client_order_id,),
             ).fetchone()
         return (
@@ -476,11 +484,24 @@ def mark_synthetic_order_not_created(client_order_id: str) -> bool:
             _create_tables(connection)
             connection.execute(
                 "UPDATE orders SET order_status='terminal_not_created' "
-                "WHERE client_order_id=? AND submission_kind='synthetic_ambiguous' "
-                "AND order_status='submit_unknown'",
+                "WHERE client_order_id=? AND ((submission_kind='synthetic_ambiguous' "
+                "AND order_status='submit_unknown') OR (submission_kind='entry_intent' "
+                "AND order_status='submission_intent'))",
                 (client_order_id,),
             )
             return connection.execute("SELECT changes()").fetchone()[0] > 0
+    finally:
+        connection.close()
+
+
+def probe_writable() -> None:
+    """Acquire a SQLite write reservation and roll back without changing data."""
+    connection = sqlite3.connect(config.DATABASE_PATH, timeout=5)
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        connection.execute("CREATE TEMP TABLE IF NOT EXISTS accounting_write_probe (value INTEGER)")
+        connection.execute("INSERT INTO accounting_write_probe(value) VALUES (1)")
+        connection.rollback()
     finally:
         connection.close()
 

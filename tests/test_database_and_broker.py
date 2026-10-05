@@ -156,7 +156,7 @@ class BrokerOrderTests(unittest.TestCase):
         self.assertEqual(result, broker.OrderOutcome.PENDING)
         self.assertEqual(len(pending), 1)
         context = next(iter(pending.values()))
-        self.assertEqual(context.submission_kind, "synthetic_ambiguous")
+        self.assertEqual(context.submission_kind, "entry_intent")
         self.assertEqual(context.order_role, "strategy_entry")
 
     def test_ambiguous_submit_unknown_expires_after_old_confirmed_404_and_restart(self):

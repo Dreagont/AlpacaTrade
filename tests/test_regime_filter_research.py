@@ -23,6 +23,21 @@ class RegimeFilterResearchTests(unittest.TestCase):
             experiment.main(["--help"])
         self.assertEqual(help_exit.exception.code, 0)
 
+    def test_cli_accepts_explicit_utc_end_time_without_running_research(self):
+        with patch.object(experiment, "run_regime_filter_research") as run:
+            self.assertEqual(experiment.main([
+                "--end-time", "2022-10-26T04:00:00+00:00", "--no-csv",
+            ]), 0)
+        self.assertEqual(
+            run.call_args.kwargs["research_end_time"],
+            datetime(2022, 10, 26, 4, tzinfo=timezone.utc),
+        )
+
+    def test_cli_rejects_non_utc_end_time(self):
+        with self.assertRaises(SystemExit) as error:
+            experiment.main(["--end-time", "2022-10-26T04:00:00+02:00"])
+        self.assertEqual(error.exception.code, 2)
+
     def test_fixed_strategies_fetch_once_run_continuously_and_write_block_csv(self):
         aligned = datetime(2026, 10, 5, 0, tzinfo=timezone.utc)
         block_days, blocks = 1, 2

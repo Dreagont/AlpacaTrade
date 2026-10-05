@@ -83,6 +83,8 @@ class LiveRuntime:
     entries_disabled: bool = False
     risk_exit: dict | None = None
     last_risk_price_source: str | None = None
+    ownership_mismatch: bool = False
+    proven_bot_quantity: float | None = None
 
 
 @dataclass(frozen=True)
@@ -215,6 +217,26 @@ def _refresh_position_after_order(runtime, order, side, before_quantity, strateg
         _set_active_position(runtime, None)
     elif side == "BUY":
         _set_active_position(runtime, position, source_order=order, strategy=strategy)
+    elif (
+        side == "SELL" and runtime is not None and runtime.ownership_mismatch
+        and runtime.active_position is not None
+    ):
+        active = dict(runtime.active_position)
+        owned_before = _optional_float(active.get("credited_quantity")) or 0.0
+        owned_remaining = max(0.0, min(after_quantity, owned_before - max(0.0, before_quantity - after_quantity)))
+        if owned_remaining <= max(1e-8, after_quantity * 1e-5):
+            _set_active_position(runtime, None)
+            runtime.proven_bot_quantity = 0.0
+        else:
+            _set_active_position(runtime, position, strategy=strategy)
+            runtime.active_position["credited_quantity"] = owned_remaining
+            runtime.active_position["source_order_id"] = active.get("source_order_id")
+            runtime.active_position["source_client_order_id"] = active.get("source_client_order_id")
+            try:
+                database.set_active_bot_position(runtime.active_position)
+            except Exception as error:
+                _mark_accounting_degraded(runtime, f"could not persist capped BTC provenance: {error}")
+            runtime.proven_bot_quantity = owned_remaining
     elif runtime is not None and runtime.active_position is not None:
         _set_active_position(runtime, position, strategy=strategy)
     return position, asset_delta
@@ -291,6 +313,7 @@ def _record_order(
     last_reconcile_at=None,
     position_before_quantity=None,
     order_role=None,
+    candle_timestamp=None,
 ):
     strategy = strategy or _live_strategy()
     filled_quantity = _optional_float(getattr(order, "filled_qty", None))
@@ -336,6 +359,10 @@ def _record_order(
         last_reconcile_at=last_reconcile_at,
         position_before_quantity=position_before_quantity,
         order_role=order_role,
+        candle_timestamp=(
+            candle_timestamp.isoformat()
+            if hasattr(candle_timestamp, "isoformat") else candle_timestamp
+        ),
     )
 
 
@@ -450,6 +477,79 @@ def _record_definitive_rejection(
     return OrderOutcome.TERMINAL_NOT_FILLED
 
 
+def _record_rate_limited(
+    *, side, reason, requested_notional, client_order_id, strategy, runtime,
+    order_role,
+):
+    limited = SimpleNamespace(
+        id=f"rate-limited:{client_order_id}",
+        client_order_id=client_order_id,
+        status=SimpleNamespace(value="rate_limited"),
+        filled_qty=None,
+        filled_avg_price=None,
+    )
+    _safe_record_order(
+        runtime, limited, side, reason, requested_notional,
+        order_status="rate_limited", client_order_id=client_order_id,
+        strategy=strategy, submission_kind="rate_limited", order_role=order_role,
+    )
+    print(f"ORDER RATE LIMITED: side={side} role={order_role} client_order_id={client_order_id}")
+    return OrderOutcome.RATE_LIMITED
+
+
+def _record_entry_preflight_unavailable(
+    *, reason, requested_notional, client_order_id, strategy, runtime,
+):
+    unavailable = SimpleNamespace(
+        id=f"preflight:{client_order_id}", client_order_id=None,
+        status=SimpleNamespace(value="entry_preflight_unavailable"),
+        filled_qty=None, filled_avg_price=None,
+    )
+    _safe_record_order(
+        runtime, unavailable, "BUY", f"{reason}; client_order_id={client_order_id}", requested_notional,
+        order_status="entry_preflight_unavailable", client_order_id=None,
+        strategy=strategy, submission_kind="preflight_unavailable",
+        position_before_quantity=0.0, order_role="strategy_entry",
+    )
+    print(
+        f"ENTRY PREFLIGHT UNAVAILABLE: BUY skipped for this candle; "
+        f"client_order_id={client_order_id}", file=sys.stderr
+    )
+
+
+def _persist_buy_submission_intent(
+    *, reason, amount, candle_timestamp, client_order_id, strategy, runtime,
+):
+    created_at = datetime.now(timezone.utc).isoformat()
+    intent = SimpleNamespace(
+        id=f"client:{client_order_id}", client_order_id=client_order_id,
+        status=SimpleNamespace(value="submission_intent"),
+        filled_qty=None, filled_avg_price=None,
+    )
+    # This write is deliberately strict: no durable intent means no BUY POST.
+    _record_order(
+        intent, "BUY", reason, amount, order_status="submission_intent",
+        client_order_id=client_order_id, strategy=strategy,
+        submission_kind="entry_intent", created_at=created_at,
+        position_before_quantity=0.0, order_role="strategy_entry",
+        candle_timestamp=candle_timestamp,
+    )
+    return created_at
+
+
+def _queue_buy_intent_reconciliation(
+    *, reason, amount, candle_timestamp, client_order_id, strategy,
+    pending_reconciliations, created_at,
+):
+    context = PendingReconciliation(
+        "BUY", reason, amount, None, candle_timestamp, client_order_id,
+        strategy.name, _strategy_parameters_json(strategy), None,
+        "entry_intent", created_at, 0.0, "strategy_entry",
+    )
+    pending_reconciliations[f"client:{client_order_id}"] = context
+    return OrderOutcome.PENDING
+
+
 def _confirmed_position_after_buy(order, strategy, runtime, *, before_quantity=0.0):
     position = None
     last_error = None
@@ -495,50 +595,66 @@ def _submit_and_log_buy(
     try:
         order = get_order_by_client_order_id(client_order_id)
     except Exception:
-        return _persist_ambiguous_submission(
-            side="BUY",
-            reason=reason,
-            requested_notional=amount,
-            candle_timestamp=candle_timestamp,
-            client_order_id=client_order_id,
-            pending_reconciliations=pending_reconciliations,
-            strategy=strategy,
-            runtime=runtime,
-            position_before_quantity=0.0,
-            order_role=order_role,
+        _record_entry_preflight_unavailable(
+            reason=reason, requested_notional=amount,
+            client_order_id=client_order_id, strategy=strategy, runtime=runtime,
         )
+        return OrderOutcome.TERMINAL_NOT_FILLED
+    created_at = None
     if order is None:
+        try:
+            created_at = _persist_buy_submission_intent(
+                reason=reason, amount=amount, candle_timestamp=candle_timestamp,
+                client_order_id=client_order_id, strategy=strategy, runtime=runtime,
+            )
+        except Exception as error:
+            _mark_accounting_degraded(runtime, f"BUY submission intent was not persisted: {error}")
+            print("BUY ABORTED: durable submission intent could not be written", file=sys.stderr)
+            return OrderOutcome.TERMINAL_NOT_FILLED
         try:
             order = buy_btc(amount, client_order_id=client_order_id)
         except Exception as error:
+            failure_kind = classify_submission_exception(error)
+            if failure_kind == SubmissionFailureKind.RATE_LIMITED:
+                return _record_rate_limited(
+                    side="BUY", reason=reason, requested_notional=amount,
+                    client_order_id=client_order_id, strategy=strategy,
+                    runtime=runtime, order_role=order_role,
+                )
+            if failure_kind == SubmissionFailureKind.DEFINITIVE_REJECTION:
+                return _record_definitive_rejection(
+                    side="BUY", reason=reason, requested_notional=amount,
+                    client_order_id=client_order_id, strategy=strategy,
+                    runtime=runtime, order_role=order_role,
+                )
             try:
                 order = get_order_by_client_order_id(client_order_id)
-            except Exception:
-                order = None
-            if order is None:
-                failure_kind = classify_submission_exception(error)
-                if failure_kind == SubmissionFailureKind.DEFINITIVE_REJECTION:
-                    return _record_definitive_rejection(
-                        side="BUY",
-                        reason=reason,
-                        requested_notional=amount,
-                        client_order_id=client_order_id,
-                        strategy=strategy,
-                        runtime=runtime,
-                        order_role=order_role,
-                    )
-                return _persist_ambiguous_submission(
-                    side="BUY",
-                    reason=reason,
-                    requested_notional=amount,
-                    candle_timestamp=candle_timestamp,
-                    client_order_id=client_order_id,
-                    pending_reconciliations=pending_reconciliations,
-                    strategy=strategy,
-                    runtime=runtime,
-                    position_before_quantity=0.0,
-                    order_role=order_role,
+            except Exception as lookup_error:
+                print(
+                    f"BUY SUBMISSION STATE UNKNOWN after POST: {lookup_error}; "
+                    f"reconciling durable intent {client_order_id}", file=sys.stderr
                 )
+                return _queue_buy_intent_reconciliation(
+                    reason=reason, amount=amount, candle_timestamp=candle_timestamp,
+                    client_order_id=client_order_id, strategy=strategy,
+                    pending_reconciliations=pending_reconciliations,
+                    created_at=created_at,
+                )
+            if order is None:
+                return _queue_buy_intent_reconciliation(
+                    reason=reason, amount=amount, candle_timestamp=candle_timestamp,
+                    client_order_id=client_order_id, strategy=strategy,
+                    pending_reconciliations=pending_reconciliations,
+                    created_at=created_at,
+                )
+    # Update the same intent with broker identity/status before any fill wait.
+    _safe_record_order(
+        runtime, order, "BUY", reason, amount,
+        client_order_id=client_order_id, strategy=strategy,
+        submission_kind="broker_order", created_at=created_at,
+        position_before_quantity=0.0, order_role=order_role,
+        candle_timestamp=candle_timestamp,
+    )
     try:
         order = wait_for_order_fill(order.id)
     except OrderFillTimeoutError as error:
@@ -745,11 +861,121 @@ def _position_snapshot(position):
     )
 
 
-def _cancel_protective_stops(pending_reconciliations, strategy, runtime=None):
+def _proven_bot_quantity_for_stale_position(position, runtime):
+    """Return a risk-only sell cap when confirmed bot provenance is quantity-stale."""
+    if position is None or runtime is None or not runtime.active_position:
+        return None
+    active = runtime.active_position
+    expected = _optional_float(active.get("credited_quantity"))
+    client_id = active.get("source_client_order_id")
+    order_id = active.get("source_order_id")
+    if (
+        not active.get("source_confirmed") or expected is None or expected <= 0
+        or not client_id or not str(client_id).startswith("bot-") or not order_id
+    ):
+        return None
+    try:
+        actual = _position_quantity(position)
+        asset_id = str(getattr(position, "asset_id", None) or broker_position_identifier(position))
+        if not btc_symbol_matches(getattr(position, "symbol", None)):
+            return None
+        if active.get("asset_id") and str(active["asset_id"]) != asset_id:
+            return None
+        records = database.get_order_records()
+        source = next((row for row in records if row.get("client_order_id") == client_id), None)
+        if not source or str(source.get("order_id")) != str(order_id):
+            return None
+        if source.get("side") != "BUY" or source.get("order_role") != "strategy_entry":
+            return None
+        if source.get("position_before_quantity") is None:
+            return None
+        if source.get("order_status") not in {
+            "filled", "partial_pending", "timeout_pending", "pending", "accepted", "new"
+        }:
+            return None
+        if abs(actual - expected) <= max(1e-8, actual * 1e-5):
+            return None
+        return min(actual, expected)
+    except Exception:
+        return None
+
+
+def _try_recover_accounting(runtime, pending_reconciliations, position):
+    if runtime is None or not runtime.accounting_degraded:
+        return not (runtime.entries_disabled if runtime else False)
+    if runtime.risk_exit is not None:
+        return False
+    if _has_pending_entry_conflict(pending_reconciliations):
+        return False
+    try:
+        database.probe_writable()
+        persisted_pending = database.get_order_records(pending_only=True)
+        if any(row.get("order_role") != "protective_stop" for row in persisted_pending):
+            return False
+        if position is not None:
+            active = runtime.active_position
+            if not active or not active.get("source_confirmed"):
+                return False
+            source_client_id = active.get("source_client_order_id")
+            source_order_id = active.get("source_order_id")
+            source = next((
+                row for row in database.get_order_records()
+                if row.get("client_order_id") == source_client_id
+                and str(row.get("order_id")) == str(source_order_id)
+            ), None)
+            if (
+                not source or source.get("side") != "BUY"
+                or source.get("order_role") != "strategy_entry"
+                or source.get("position_before_quantity") is None
+                or source.get("order_status") != "filled"
+            ):
+                return False
+            owned, _reason = bot_owns_position(position, runtime)
+            if not owned:
+                return False
+        elif runtime.active_position is not None:
+            _set_active_position(runtime, None)
+        runtime.accounting_degraded = False
+        runtime.entries_disabled = False
+        print("ACCOUNTING RECOVERY COMPLETE: entries re-enabled after full state probe")
+        return True
+    except Exception as error:
+        _mark_accounting_degraded(runtime, f"accounting recovery probe failed: {error}")
+        return False
+
+
+def _pending_contexts(pending_reconciliations, *, side=None, include_protective=False):
+    contexts = []
+    for context in pending_reconciliations.values():
+        if side is not None and context.side != side:
+            continue
+        if not include_protective and (
+            context.order_role == "protective_stop"
+            or str(context.client_order_id or "").startswith("protect-")
+        ):
+            continue
+        contexts.append(context)
+    return contexts
+
+
+def _has_pending_nonprotective_sell(pending_reconciliations):
+    return bool(_pending_contexts(pending_reconciliations, side="SELL"))
+
+
+def _has_pending_entry_conflict(pending_reconciliations):
+    return bool(_pending_contexts(pending_reconciliations))
+
+
+def _cancel_protective_stops(
+    pending_reconciliations, strategy, runtime=None, *, position_before_quantity=None,
+):
     for protective in get_open_btc_orders():
         if not is_protective_order(protective):
             continue
         order_id = str(protective.id)
+        before = position_before_quantity
+        if before is None and runtime is not None and runtime.active_position:
+            before = _optional_float(runtime.active_position.get("credited_quantity"))
         try:
             cancel_order(order_id)
         except Exception:
@@ -763,7 +989,7 @@ def _cancel_protective_stops(pending_reconciliations, strategy, runtime=None):
                 "SELL", "protective_stop_limit", None, None, None,
                 getattr(current, "client_order_id", None), strategy.name,
                 _strategy_parameters_json(strategy), None, "broker_order",
-                datetime.now(timezone.utc).isoformat(), None, "protective_stop"
+                datetime.now(timezone.utc).isoformat(), before, "protective_stop"
             )
             _safe_record_order(
                 runtime,
@@ -773,10 +999,20 @@ def _cancel_protective_stops(pending_reconciliations, strategy, runtime=None):
                 None,
                 order_status=OrderOutcome.TIMEOUT_PENDING.value,
                 strategy=strategy,
+                client_order_id=getattr(current, "client_order_id", None),
+                submission_kind="broker_order",
+                position_before_quantity=before,
+                order_role="protective_stop",
             )
             raise RuntimeError(
                 f"Protective SELL {order_id} cancellation is not confirmed; normal SELL held"
             ) from error
+        status = order_status_value(current)
+        asset_delta = None
+        if status == "filled" or (_optional_float(getattr(current, "filled_qty", None)) or 0) > 0:
+            _position, asset_delta = _refresh_position_after_order(
+                runtime, current, "SELL", before, strategy
+            )
         _safe_record_order(
             runtime,
             current,
@@ -784,6 +1020,10 @@ def _cancel_protective_stops(pending_reconciliations, strategy, runtime=None):
             "protective_stop_limit",
             None,
             strategy=strategy,
+            asset_quantity_delta=asset_delta,
+            submission_kind="broker_order",
+            position_before_quantity=before,
+            order_role="protective_stop",
         )
         pending_reconciliations.pop(order_id, None)
     remaining = [
@@ -801,7 +1041,11 @@ def _submit_and_log_sell(
     *, runtime=None, role="strategy_exit", risk_episode=None, risk_attempt=0,
 ):
     strategy = strategy or _live_strategy()
-    _cancel_protective_stops(pending_reconciliations, strategy, runtime)
+    before_snapshot = position
+    _cancel_protective_stops(
+        pending_reconciliations, strategy, runtime,
+        position_before_quantity=_position_quantity(before_snapshot) if before_snapshot is not None else None,
+    )
     position = get_btc_position()
     if position is None:
         print("SELL SKIPPED: broker confirms position is flat")
@@ -809,13 +1053,34 @@ def _submit_and_log_sell(
     if has_open_order(OrderSide.SELL, include_protective=False):
         print(f"EXIT ORDER PENDING: reason={reason}")
         return OrderOutcome.PENDING
-    quantity = abs(float(position.qty))
+    position_before_quantity = abs(float(position.qty))
+    quantity = position_before_quantity
+    if role.startswith("risk_exit") and runtime is not None and runtime.ownership_mismatch:
+        proven_cap = runtime.proven_bot_quantity
+        if proven_cap is None:
+            proven_cap = _proven_bot_quantity_for_stale_position(position, runtime)
+        if proven_cap is None or proven_cap <= 0:
+            print("RISK EXIT SAFE-HALT: stale position has no provable bot-owned sell quantity")
+            return OrderOutcome.PENDING
+        quantity = min(quantity, proven_cap)
     if role.startswith("risk_exit"):
         identity = f"{risk_episode or uuid.uuid4().hex}:{risk_attempt}:{reason}"
         client_order_id = _strategy_order_id(strategy, identity, "SELL", role=role)
     else:
         client_order_id = _strategy_order_id(strategy, candle_timestamp, "SELL", role=role)
-    existing = get_order_by_client_order_id(client_order_id)
+    try:
+        existing = get_order_by_client_order_id(client_order_id)
+    except Exception as error:
+        # A failed preflight is not a submitted order for entry flow. For SELL,
+        # keep the risk episode conservative because a duplicate reduction may
+        # otherwise race an order whose state cannot be queried.
+        return _persist_ambiguous_submission(
+            side="SELL", reason=reason,
+            requested_notional=_optional_float(position.market_value),
+            candle_timestamp=candle_timestamp, client_order_id=client_order_id,
+            pending_reconciliations=pending_reconciliations, strategy=strategy,
+            runtime=runtime, position_before_quantity=position_before_quantity, order_role=role,
+        )
     if existing is not None:
         order = existing
     else:
@@ -831,6 +1096,13 @@ def _submit_and_log_sell(
             except Exception:
                 order = None
             if order is None:
+                if classify_submission_exception(error) == SubmissionFailureKind.RATE_LIMITED:
+                    return _record_rate_limited(
+                        side="SELL", reason=reason,
+                        requested_notional=_optional_float(position.market_value),
+                        client_order_id=client_order_id, strategy=strategy,
+                        runtime=runtime, order_role=role,
+                    )
                 if classify_submission_exception(error) == SubmissionFailureKind.DEFINITIVE_REJECTION:
                     return _record_definitive_rejection(
                         side="SELL", reason=reason,
@@ -847,7 +1119,7 @@ def _submit_and_log_sell(
                     pending_reconciliations=pending_reconciliations,
                     strategy=strategy,
                     runtime=runtime,
-                    position_before_quantity=quantity,
+                    position_before_quantity=position_before_quantity,
                     order_role=role,
                 )
     try:
@@ -859,7 +1131,7 @@ def _submit_and_log_sell(
             "SELL", reason, _optional_float(position.market_value),
             _position_snapshot(position), candle_timestamp, client_order_id,
             strategy.name, _strategy_parameters_json(strategy), None,
-            "broker_order", datetime.now(timezone.utc).isoformat(), quantity, role
+            "broker_order", datetime.now(timezone.utc).isoformat(), position_before_quantity, role
         )
         _safe_record_order(
             runtime,
@@ -871,7 +1143,7 @@ def _submit_and_log_sell(
             order_status=outcome.value,
             client_order_id=client_order_id,
             strategy=strategy,
-            submission_kind="broker_order", position_before_quantity=quantity,
+            submission_kind="broker_order", position_before_quantity=position_before_quantity,
             order_role=role,
         )
         print(f"SELL ORDER PENDING: id={order.id} status={order_status_value(order)}")
@@ -880,7 +1152,7 @@ def _submit_and_log_sell(
     asset_delta = None
     if runtime is not None and _optional_float(getattr(order, "filled_qty", None)):
         _post_position, asset_delta = _refresh_position_after_order(
-            runtime, order, "SELL", quantity, strategy
+            runtime, order, "SELL", position_before_quantity, strategy
         )
     _safe_record_order(
         runtime,
@@ -892,7 +1164,7 @@ def _submit_and_log_sell(
         client_order_id=client_order_id,
         strategy=strategy,
         asset_quantity_delta=asset_delta,
-        submission_kind="broker_order", position_before_quantity=quantity,
+        submission_kind="broker_order", position_before_quantity=position_before_quantity,
         order_role=role,
     )
     if outcome in {OrderOutcome.PENDING, OrderOutcome.PARTIAL_PENDING}:
@@ -900,14 +1172,14 @@ def _submit_and_log_sell(
             "SELL", reason, _optional_float(position.market_value),
             _position_snapshot(position), candle_timestamp, client_order_id,
             strategy.name, _strategy_parameters_json(strategy), None,
-            "broker_order", datetime.now(timezone.utc).isoformat(), quantity, role
+            "broker_order", datetime.now(timezone.utc).isoformat(), position_before_quantity, role
         )
     print(f"SELL ORDER {outcome.value.upper()}: id={order.id} reason={reason}")
     return outcome
 
 
-def _expire_synthetic_if_confirmed_absent(order_id, context):
-    if context.submission_kind != "synthetic_ambiguous":
+def _expire_uncreated_submission_if_confirmed_absent(order_id, context):
+    if context.submission_kind not in {"synthetic_ambiguous", "entry_intent"}:
         return False
     try:
         state = database.note_synthetic_order_reconciliation(context.client_order_id)
@@ -935,6 +1207,55 @@ def _expire_synthetic_if_confirmed_absent(order_id, context):
     return False
 
 
+_expire_synthetic_if_confirmed_absent = _expire_uncreated_submission_if_confirmed_absent
+
+
+def _order_matches_persisted_provenance(order, context):
+    broker_client_id = getattr(order, "client_order_id", None)
+    return bool(context.client_order_id and broker_client_id == context.client_order_id)
+
+
+def _reconcile_filled_order_provenance(order, context, strategy, runtime):
+    """Apply identical actual-position accounting during runtime and startup restore."""
+    if runtime is None or not _optional_float(getattr(order, "filled_qty", None)):
+        return None
+    if not _order_matches_persisted_provenance(order, context):
+        return None
+    before = context.position_before_quantity
+    if before is None:
+        return None
+    if context.side == "BUY":
+        if context.order_role != "strategy_entry" or before != 0:
+            return None
+        active = runtime.active_position
+        if active and active.get("source_client_order_id") != context.client_order_id:
+            return None
+        _position, delta = _confirmed_position_after_buy(
+            order, strategy, runtime, before_quantity=before,
+        )
+        return delta
+    if context.side == "SELL":
+        if context.order_role not in {"strategy_exit", "risk_exit_stop_loss", "risk_exit_take_profit", "protective_stop"}:
+            return None
+        active = runtime.active_position
+        if not active or not active.get("source_confirmed"):
+            return None
+        active_quantity = _optional_float(active.get("credited_quantity"))
+        if active_quantity is None:
+            return None
+        tolerance = max(1e-8, before * 1e-5)
+        if abs(active_quantity - before) > tolerance:
+            if context.order_role not in {"risk_exit_stop_loss", "risk_exit_take_profit", "protective_stop"}:
+                return None
+            runtime.ownership_mismatch = True
+            runtime.proven_bot_quantity = min(active_quantity, before)
+        _position, delta = _refresh_position_after_order(
+            runtime, order, "SELL", before, strategy,
+        )
+        return delta
+    return None
+
+
 def reconcile_pending_orders(pending_reconciliations, strategy=None, *, runtime=None):
     strategy = strategy or _live_strategy()
     for order_id, context in list(pending_reconciliations.items()):
@@ -946,7 +1267,8 @@ def reconcile_pending_orders(pending_reconciliations, strategy=None, *, runtime=
         except BrokerOrderNotFound as error:
             if _expire_synthetic_if_confirmed_absent(order_id, context):
                 pending_reconciliations.pop(order_id, None)
-                print(f"SYNTHETIC ORDER EXPIRED AFTER CONFIRMED NOT-FOUND: {context.client_order_id}")
+                label = "BUY INTENT CONFIRMED NOT CREATED" if context.submission_kind == "entry_intent" else "SYNTHETIC ORDER EXPIRED AFTER CONFIRMED NOT-FOUND"
+                print(f"{label}: {context.client_order_id}")
             else:
                 print(f"ORDER RECONCILIATION CONFIRMED NOT-FOUND: id={order_id} error={error}")
             continue
@@ -961,20 +1283,9 @@ def reconcile_pending_orders(pending_reconciliations, strategy=None, *, runtime=
                 selected_strategy = get_strategy(context.strategy_name)
             except Exception:
                 selected_strategy = strategy
-        asset_delta = None
-        has_filled_quantity = bool(_optional_float(getattr(order, "filled_qty", None)))
-        if runtime is not None and has_filled_quantity and context.side == "SELL":
-            before = context.position_before_quantity
-            if before is None and context.position is not None:
-                before = getattr(context.position, "quantity", None)
-            _position, asset_delta = _refresh_position_after_order(
-                runtime, order, "SELL", before, selected_strategy
-            )
-        elif has_filled_quantity and context.side == "BUY" and runtime is not None:
-            _position, asset_delta = _confirmed_position_after_buy(
-                order, selected_strategy, runtime,
-                before_quantity=context.position_before_quantity or 0.0,
-            )
+        asset_delta = _reconcile_filled_order_provenance(
+            order, context, selected_strategy, runtime,
+        )
         _safe_record_order(
             runtime,
             order,
@@ -1085,7 +1396,7 @@ def execute_risk_exit(
             print("RISK EXIT WAITING: pending BUY cancellation/fill is not terminal")
             return OrderOutcome.PENDING
         return None
-    if any(ctx.side == "SELL" for ctx in pending_reconciliations.values()):
+    if _has_pending_nonprotective_sell(pending_reconciliations):
         print("RISK EXIT WAITING: a SELL order is still under broker reconciliation")
         return OrderOutcome.PENDING
     if has_open_order(OrderSide.SELL, include_protective=False):
@@ -1111,7 +1422,7 @@ def _context_from_record(record):
         record.get("reason") or "startup_reconciliation",
         _optional_float(record.get("requested_notional")),
         None,
-        None,
+        record.get("candle_timestamp"),
         record.get("client_order_id"),
         record.get("strategy_name"),
         record.get("strategy_parameters_json"),
@@ -1202,8 +1513,9 @@ def restore_pending_orders(pending_reconciliations, strategy=None, *, runtime=No
                 client_order_id=record.get("client_order_id"),
             )
         except BrokerOrderNotFound as error:
-            if _expire_synthetic_if_confirmed_absent(order_id, context):
-                print(f"SYNTHETIC ORDER EXPIRED AFTER CONFIRMED NOT-FOUND: {context.client_order_id}")
+            if _expire_uncreated_submission_if_confirmed_absent(order_id, context):
+                label = "BUY INTENT CONFIRMED NOT CREATED" if context.submission_kind == "entry_intent" else "SYNTHETIC ORDER EXPIRED AFTER CONFIRMED NOT-FOUND"
+                print(f"{label}: {context.client_order_id}")
             else:
                 pending_reconciliations[order_id] = context
                 print(f"SAFE-HALT WARNING: persisted order {order_id} confirmed absent but retained: {error}")
@@ -1217,6 +1529,15 @@ def restore_pending_orders(pending_reconciliations, strategy=None, *, runtime=No
             continue
         outcome = classify_order(order)
         if outcome in {OrderOutcome.FILLED, OrderOutcome.TERMINAL_NOT_FILLED}:
+            selected_strategy = strategy
+            if context.strategy_name:
+                try:
+                    selected_strategy = get_strategy(context.strategy_name)
+                except Exception:
+                    selected_strategy = strategy
+            asset_delta = _reconcile_filled_order_provenance(
+                order, context, selected_strategy, runtime,
+            )
             _safe_record_order(
                 runtime,
                 order,
@@ -1225,7 +1546,12 @@ def restore_pending_orders(pending_reconciliations, strategy=None, *, runtime=No
                 context.requested_notional,
                 order_status=order_status_value(order),
                 client_order_id=context.client_order_id,
-                strategy=strategy,
+                strategy=selected_strategy,
+                asset_quantity_delta=asset_delta,
+                submission_kind=context.submission_kind,
+                created_at=context.created_at,
+                position_before_quantity=context.position_before_quantity,
+                order_role=context.order_role,
             )
         else:
             pending_reconciliations[str(order.id)] = context
@@ -1246,6 +1572,7 @@ def bot_owns_position(position, runtime=None):
     """Accept only broker-confirmed active provenance or a complete net-delta ledger."""
     if position is None:
         return True, ""
+    details_evidence = None
     try:
         actual = abs(float(position.qty))
         if not btc_symbol_matches(getattr(position, "symbol", None)):
@@ -1279,9 +1606,13 @@ def bot_owns_position(position, runtime=None):
         else:
             details = database.get_bot_owned_btc_quantity_details()
             expected, reliable = details.quantity, details.reliable
+            details_evidence = details.evidence
     except Exception as error:
+        _mark_accounting_degraded(runtime, f"position ownership reconciliation failed: {error}")
         return False, f"position ownership ledger unavailable: {error}"
     if not reliable or expected <= 0:
+        if details_evidence == "active_position_record_unavailable":
+            _mark_accounting_degraded(runtime, "active position provenance could not be read")
         return False, "no reliable bot-owned BTC fill record exists"
     tolerance = max(1e-8, actual * 1e-5)
     if abs(actual - expected) > tolerance:
@@ -1367,7 +1698,11 @@ def _advance_risk_exit_retry(runtime):
     if state is None:
         return
     state["attempt"] = int(state.get("attempt", 0)) + 1
-    state["next_attempt_at"] = time.time() + trade_config.RISK_EXIT_RETRY_COOLDOWN_SECONDS
+    if state["attempt"] < trade_config.RISK_EXIT_FAST_ATTEMPTS:
+        cooldown = trade_config.RISK_EXIT_FAST_COOLDOWN_SECONDS
+    else:
+        cooldown = trade_config.RISK_EXIT_ESCALATED_COOLDOWN_SECONDS
+    state["next_attempt_at"] = time.time() + cooldown
     _persist_risk_exit_state(runtime)
 
 
@@ -1390,19 +1725,34 @@ def run():
             _mark_accounting_degraded(runtime, f"startup order reconciliation unavailable: {error}")
             if runtime.active_position is None:
                 print("SAFE-HALT STARTUP: database order state unavailable and no active position provenance is loaded")
-                return
+                # Keep the process in conservative recovery mode so a transient
+                # SQLite lock can clear without requiring a manual restart.
         state = lookup_btc_position()
         if state.status == PositionLookupStatus.POSITION_STATE_UNKNOWN:
             print(f"SAFE-HALT BROKER POSITION STATE UNKNOWN: {state.error}")
             return
         position = state.position
         owned, ownership_reason = bot_owns_position(position, runtime)
+        stale_owned_quantity = (
+            _proven_bot_quantity_for_stale_position(position, runtime) if not owned else None
+        )
         if not owned:
-            print(
-                "SAFE-HALT_MANUAL_OR_UNKNOWN_POSITION: "
-                f"{ownership_reason}. Use a dedicated Alpaca account for this bot's BTC."
-            )
-            return
+            if stale_owned_quantity is not None:
+                runtime.ownership_mismatch = True
+                runtime.proven_bot_quantity = stale_owned_quantity
+                print(
+                    f"OWNERSHIP QUANTITY MISMATCH: risk reductions capped to "
+                    f"proven bot BTC={stale_owned_quantity:g}; strategy actions disabled",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    "SAFE-HALT_MANUAL_OR_UNKNOWN_POSITION: "
+                    f"{ownership_reason}. Use a dedicated Alpaca account for this bot's BTC."
+                )
+                if not runtime.accounting_degraded:
+                    return
+                # Keep running conservatively so transient DB failure can recover.
     except Exception as error:
         print(f"SAFE-HALT STARTUP RECONCILIATION FAILED: {error}")
         return
@@ -1417,6 +1767,13 @@ def run():
 
     while True:
         try:
+            if runtime.accounting_degraded:
+                if runtime.active_position is None:
+                    _load_runtime_provenance(runtime)
+                try:
+                    restore_pending_orders(pending_reconciliations, strategy, runtime=runtime)
+                except Exception as error:
+                    _mark_accounting_degraded(runtime, f"startup order reconciliation retry unavailable: {error}")
             reconcile_pending_orders(pending_reconciliations, strategy, runtime=runtime)
             state = lookup_btc_position()
             if state.status == PositionLookupStatus.POSITION_STATE_UNKNOWN:
@@ -1425,10 +1782,19 @@ def run():
                 continue
             position = state.position
             owned, ownership_reason = bot_owns_position(position, runtime)
-            if not owned:
+            stale_owned_quantity = (
+                _proven_bot_quantity_for_stale_position(position, runtime) if not owned else None
+            )
+            runtime.ownership_mismatch = not owned and stale_owned_quantity is not None
+            runtime.proven_bot_quantity = stale_owned_quantity
+            if not owned and stale_owned_quantity is None:
                 print(f"SAFE-HALT_MANUAL_OR_UNKNOWN_POSITION: {ownership_reason}")
                 time.sleep(trade_config.CHECK_INTERVAL_SECONDS)
                 continue
+            if position is None and runtime.active_position is not None and not any(
+                ctx.side == "BUY" for ctx in pending_reconciliations.values()
+            ):
+                _set_active_position(runtime, None)
             market_price = None
             price_source = "market_data"
             try:
@@ -1452,30 +1818,35 @@ def run():
                     _persist_risk_exit_state(runtime)
                 elif time.time() >= float(risk_exit_state.get("next_attempt_at", 0)):
                     attempt = int(risk_exit_state.get("attempt", 0))
-                    if attempt >= trade_config.RISK_EXIT_MAX_ATTEMPTS:
+                    if attempt >= trade_config.RISK_EXIT_FAST_ATTEMPTS:
                         print(
-                            f"RISK EXIT RETRY LIMIT REACHED: reason={risk_exit_state['reason']} "
-                            f"attempts={attempt}; no further automatic retries in this episode",
+                            f"!!! ESCALATED RISK EXIT RETRY: reason={risk_exit_state['reason']} "
+                            f"attempt={attempt + 1}; known exposure remains and automatic retries continue "
+                            f"every {trade_config.RISK_EXIT_ESCALATED_COOLDOWN_SECONDS}s !!!",
                             file=sys.stderr,
                         )
-                    else:
-                        _record_evaluation(
-                            None, market_price, position, "SELL", risk_exit_state["reason"], strategy
-                        )
-                        outcome = execute_risk_exit(
-                            risk_exit_state["reason"], pending_reconciliations, None,
-                            strategy, runtime=runtime, risk_state=risk_exit_state,
-                        )
-                        if outcome == OrderOutcome.TERMINAL_NOT_FILLED:
+                    _record_evaluation(
+                        None, market_price, position, "SELL", risk_exit_state["reason"], strategy
+                    )
+                    outcome = execute_risk_exit(
+                        risk_exit_state["reason"], pending_reconciliations, None,
+                        strategy, runtime=runtime, risk_state=risk_exit_state,
+                    )
+                    if outcome in {OrderOutcome.TERMINAL_NOT_FILLED, OrderOutcome.RATE_LIMITED}:
+                        _advance_risk_exit_retry(runtime)
+                    elif outcome == OrderOutcome.FILLED:
+                        fresh = get_btc_position()
+                        if fresh is None:
+                            runtime.risk_exit = None
+                            risk_exit_state = None
+                            _persist_risk_exit_state(runtime)
+                        else:
                             _advance_risk_exit_retry(runtime)
-                        elif outcome == OrderOutcome.FILLED:
-                            fresh = get_btc_position()
-                            if fresh is None:
-                                runtime.risk_exit = None
-                                risk_exit_state = None
-                                _persist_risk_exit_state(runtime)
-                            else:
-                                _advance_risk_exit_retry(runtime)
+                time.sleep(trade_config.CHECK_INTERVAL_SECONDS)
+                continue
+
+            _try_recover_accounting(runtime, pending_reconciliations, position)
+            if runtime.ownership_mismatch:
                 time.sleep(trade_config.CHECK_INTERVAL_SECONDS)
                 continue
 
@@ -1500,7 +1871,12 @@ def run():
                 indicators = strategy.prepare_indicators(bars)
                 decision = strategy.decide_at(indicators, len(indicators) - 1)
                 action, reason = decision.action, decision.reason
-                if pending_reconciliations:
+                if action == "BUY" and _has_pending_entry_conflict(pending_reconciliations):
+                    action, reason = "HOLD", "order_pending_reconciliation"
+                elif action == "SELL" and (
+                    _has_pending_nonprotective_sell(pending_reconciliations)
+                    or bool(_pending_contexts(pending_reconciliations, side="BUY"))
+                ):
                     action, reason = "HOLD", "order_pending_reconciliation"
                 elif action == "BUY" and position is not None:
                     action, reason = "HOLD", "position_already_open"

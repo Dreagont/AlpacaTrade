@@ -28,6 +28,8 @@ PAPER_SMOKE_MAX_BUY_FEE_RATE = 0.01
 SUBMIT_UNKNOWN_MAX_AGE_SECONDS = 900
 SUBMIT_UNKNOWN_MAX_RECONCILE_ATTEMPTS = 10
 
-# Risk exits retry sooner than the strategy candle cadence, but remain bounded.
-RISK_EXIT_RETRY_COOLDOWN_SECONDS = 60
-RISK_EXIT_MAX_ATTEMPTS = 3
+# Risk exits retry quickly for the first few failures, then continue at a slower
+# cadence until broker state confirms the position is flat.
+RISK_EXIT_FAST_ATTEMPTS = 3
+RISK_EXIT_FAST_COOLDOWN_SECONDS = 60
+RISK_EXIT_ESCALATED_COOLDOWN_SECONDS = 300

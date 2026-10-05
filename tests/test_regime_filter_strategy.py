@@ -5,6 +5,7 @@ import pandas as pd
 
 from backtest import required_warmup_bars, run_backtest
 from strategy import (
+    Decision,
     DONCHIAN_BREAKOUT,
     MA_RSI_CROSSOVER,
     calculate_regime_filter,
@@ -79,16 +80,34 @@ class CausalRegimeFilterTests(unittest.TestCase):
         decision = strategy.decide_at(frame, 0)
         self.assertEqual((decision.action, decision.reason), ("SELL", "regime_filter_off"))
 
-    def test_bullish_fresh_breakout_buys_and_off_to_on_requires_fresh_breakout(self):
+    def test_bullish_regime_matches_plain_donchian_without_transition_delay(self):
         strategy = create_regime_filtered_donchian_strategy(2, 2, 2, 1)
         frame = pd.DataFrame({
-            "close": [10.0, 12.0], "donchian_entry_high": [11.0, 11.0],
-            "donchian_exit_low": [5.0, 5.0], "regime_sma": [9.0, 10.0],
-            "regime_sma_previous": [8.0, 9.0], "regime_bullish": [False, True],
+            "close": [10.0, 12.0, 4.0, 8.0],
+            "donchian_entry_high": [11.0, 11.0, 11.0, 11.0],
+            "donchian_exit_low": [5.0, 5.0, 5.0, 5.0],
+            "regime_sma": [9.0] * 4, "regime_sma_previous": [8.0] * 4,
+            "regime_bullish": [False, True, True, True],
         })
+        plain = DONCHIAN_BREAKOUT
+        for index in (1, 2, 3):
+            self.assertEqual(strategy.decide_at(frame, index), plain.decide_at(frame, index))
         self.assertEqual(strategy.decide_at(frame, 1).action, "BUY")
-        frame.loc[0, "close"] = 12.0
-        self.assertEqual(strategy.decide_at(frame, 1).reason, "await_fresh_donchian_breakout")
+        self.assertEqual(strategy.decide_at(frame, 2).action, "SELL")
+        self.assertEqual(strategy.decide_at(frame, 3).action, "HOLD")
+
+    def test_nonbullish_regime_overrides_to_cash_without_entry(self):
+        strategy = create_regime_filtered_donchian_strategy(2, 2, 2, 1)
+        frame = pd.DataFrame({
+            "close": [12.0, 12.0], "donchian_entry_high": [11.0, 11.0],
+            "donchian_exit_low": [5.0, 5.0], "regime_sma": [9.0, 9.0],
+            "regime_sma_previous": [8.0, 8.0], "regime_bullish": [True, False],
+        })
+        self.assertEqual(strategy.decide_at(frame, 1), Decision("SELL", "regime_filter_off"))
+        frame.loc[1, ["donchian_entry_high", "donchian_exit_low"]] = [np.nan, np.nan]
+        self.assertEqual(strategy.decide_at(frame, 1), Decision("SELL", "regime_filter_off"))
+        frame.loc[1, ["donchian_entry_high", "donchian_exit_low"]] = [np.nan, np.nan]
+        self.assertEqual(strategy.decide_at(frame, 1), Decision("SELL", "regime_filter_off"))
 
     def test_nonbullish_holding_sells_and_bullish_breakdown_sells(self):
         strategy = create_regime_filtered_donchian_strategy(2, 2, 2, 1)

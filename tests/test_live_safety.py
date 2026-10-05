@@ -1,11 +1,16 @@
 import io
+import json
+import tempfile
 import unittest
 from contextlib import redirect_stdout
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import broker
+import config
+import database
 import main
 import market_data
 import paper_position_smoke_test
@@ -142,14 +147,14 @@ class BrokerPositionSafetyTests(unittest.TestCase):
 
 
 class LiveRiskAndOrderSafetyTests(unittest.TestCase):
-    def _run_one_risk_cycle(self, *, market_price=37000, latched=None):
+    def _run_one_risk_cycle(self, *, market_price=37000, latched=None, flat=False):
         position = make_position(qty="0.0001995")
         active = {
             "asset_id": "btc-asset", "credited_quantity": 0.0001995,
             "source_confirmed": True,
         }
         state = broker.PositionLookup(
-            broker.PositionLookupStatus.CONFIRMED_POSITION, position
+            broker.PositionLookupStatus.CONFIRMED_POSITION, None if flat else position
         )
         stop = RuntimeError("cycle complete")
         with (
@@ -190,6 +195,209 @@ class LiveRiskAndOrderSafetyTests(unittest.TestCase):
         sell.assert_called_once()
         self.assertEqual(sell.call_args.args[0], "stop_loss")
         bars.assert_not_called()
+
+    def test_risk_retry_continues_after_fast_attempts_at_escalated_cadence(self):
+        runtime = main.LiveRuntime(risk_exit={
+            "episode_id": "episode-1", "reason": "stop_loss", "attempt": 0,
+            "next_attempt_at": 0,
+        })
+        with patch("database.set_state") as persist, patch.object(main.time, "time", side_effect=[100, 160, 220]):
+            main._advance_risk_exit_retry(runtime)
+            self.assertEqual(runtime.risk_exit["next_attempt_at"], 160)
+            main._advance_risk_exit_retry(runtime)
+            self.assertEqual(runtime.risk_exit["next_attempt_at"], 220)
+            main._advance_risk_exit_retry(runtime)
+        self.assertEqual(runtime.risk_exit["attempt"], 3)
+        self.assertEqual(runtime.risk_exit["next_attempt_at"], 520)
+        self.assertEqual(trade_config.RISK_EXIT_ESCALATED_COOLDOWN_SECONDS, 300)
+        saved_latch = persist.call_args.args[1]
+        restarted = main.LiveRuntime()
+        with patch("database.get_state", return_value=saved_latch):
+            loaded = main._load_risk_exit_state(restarted)
+        self.assertEqual(loaded["attempt"], 3)
+        self.assertEqual(loaded["next_attempt_at"], 520)
+
+    def test_five_rejected_risk_sells_continue_through_escalated_cycles(self):
+        class Rejected(Exception):
+            status_code = 422
+
+        position = make_position(qty="0.0001995")
+        runtime = main.LiveRuntime(risk_exit={
+            "episode_id": "episode-rejections", "reason": "stop_loss",
+            "attempt": 0, "next_attempt_at": 0,
+        })
+        now = [100.0]
+        with (
+            patch.object(main, "get_open_btc_orders", return_value=[]),
+            patch.object(main, "get_btc_position", return_value=position),
+            patch.object(main, "has_open_order", return_value=False),
+            patch.object(main, "get_order_by_client_order_id", return_value=None),
+            patch.object(main, "sell_btc", side_effect=[Rejected("rejected")] * 5) as sell,
+            patch.object(main, "upsert_order"),
+            patch("database.set_state"),
+            patch.object(main.time, "time", side_effect=lambda: now[0]),
+        ):
+            last_cooldown = None
+            for _ in range(5):
+                attempt = runtime.risk_exit["attempt"]
+                self.assertGreaterEqual(now[0], runtime.risk_exit["next_attempt_at"])
+                attempted_at = now[0]
+                result = main._submit_and_log_sell(
+                    "stop_loss", position, {}, None,
+                    role="risk_exit_stop_loss", risk_episode="episode-rejections",
+                    risk_attempt=attempt,
+                )
+                self.assertEqual(result, broker.OrderOutcome.TERMINAL_NOT_FILLED)
+                main._advance_risk_exit_retry(runtime)
+                last_cooldown = runtime.risk_exit["next_attempt_at"] - attempted_at
+                now[0] = runtime.risk_exit["next_attempt_at"]
+        self.assertEqual(sell.call_count, 5)
+        self.assertEqual(runtime.risk_exit["attempt"], 5)
+        identifiers = [call.kwargs["client_order_id"] for call in sell.call_args_list]
+        self.assertEqual(len(set(identifiers)), 5)
+        self.assertEqual(last_cooldown, trade_config.RISK_EXIT_ESCALATED_COOLDOWN_SECONDS)
+
+    def test_escalated_retry_is_restored_after_restart_and_fourth_sell_is_attempted(self):
+        latch = json.dumps({
+            "episode_id": "episode-restart", "reason": "stop_loss",
+            "attempt": 3, "next_attempt_at": 0,
+        })
+        restored = main.LiveRuntime()
+        with patch("database.get_state", return_value=latch):
+            state = main._load_risk_exit_state(restored)
+        self.assertEqual(state["attempt"], 3)
+        sell, bars = self._run_one_risk_cycle(latched=latch)
+        sell.assert_called_once()
+        self.assertEqual(sell.call_args.args[0], "stop_loss")
+        bars.assert_not_called()
+
+    def test_confirmed_broker_flat_clears_persisted_risk_episode(self):
+        latch = json.dumps({
+            "episode_id": "episode-flat", "reason": "stop_loss",
+            "attempt": 4, "next_attempt_at": 0,
+        })
+        persisted = []
+        with patch.object(
+            main, "_persist_risk_exit_state",
+            side_effect=lambda runtime: persisted.append(runtime.risk_exit),
+        ):
+            sell, _bars = self._run_one_risk_cycle(latched=latch, flat=True)
+        sell.assert_not_called()
+        self.assertIn(None, persisted)
+
+    def test_rate_limit_is_retryable_and_does_not_create_terminal_safety_limit(self):
+        class HttpError(Exception):
+            status_code = 429
+
+        self.assertEqual(
+            broker.classify_submission_exception(HttpError("slow down")),
+            broker.SubmissionFailureKind.RATE_LIMITED,
+        )
+        runtime = main.LiveRuntime(risk_exit={
+            "episode_id": "episode-429", "reason": "stop_loss",
+            "attempt": 2, "next_attempt_at": 0,
+        })
+        position = make_position(qty="0.0001995")
+        with (
+            patch.object(main, "get_open_btc_orders", return_value=[]),
+            patch.object(main, "get_btc_position", return_value=position),
+            patch.object(main, "has_open_order", return_value=False),
+            patch.object(main, "get_order_by_client_order_id", return_value=None),
+            patch.object(main, "sell_btc", side_effect=HttpError("slow down")),
+            patch.object(main, "upsert_order"),
+            patch("database.set_state"),
+        ):
+            result = main._submit_and_log_sell(
+                "stop_loss", position, {}, None, runtime=runtime,
+                role="risk_exit_stop_loss", risk_episode="episode-429", risk_attempt=2,
+            )
+        self.assertEqual(result, broker.OrderOutcome.RATE_LIMITED)
+        with patch("database.set_state"), patch.object(main.time, "time", return_value=1000):
+            main._advance_risk_exit_retry(runtime)
+        self.assertEqual(runtime.risk_exit["attempt"], 3)
+
+    def test_accounting_recovery_requires_provenance_and_no_risk_episode(self):
+        position = make_position(qty="0.0001995")
+        runtime = main.LiveRuntime(
+            active_position={
+                "asset_id": "btc-asset", "credited_quantity": 0.0001995,
+                "source_confirmed": True, "source_order_id": "buy-order",
+                "source_client_order_id": "bot-buy",
+            },
+            accounting_degraded=True, entries_disabled=True,
+        )
+        with (
+            patch("database.probe_writable") as write_probe,
+            patch("database.get_active_bot_position", return_value=runtime.active_position),
+            patch("database.get_order_records", side_effect=lambda pending_only=False: [] if pending_only else [{
+                "client_order_id": "bot-buy", "order_id": "buy-order", "side": "BUY",
+                "order_role": "strategy_entry", "position_before_quantity": 0,
+                "order_status": "filled",
+            }]),
+        ):
+            self.assertTrue(main._try_recover_accounting(runtime, {}, position))
+        write_probe.assert_called_once()
+        self.assertFalse(runtime.accounting_degraded)
+        self.assertFalse(runtime.entries_disabled)
+
+        runtime.accounting_degraded = True
+        runtime.entries_disabled = True
+        runtime.risk_exit = {"episode_id": "risk", "reason": "stop_loss"}
+        with patch("database.probe_writable") as blocked_probe:
+            self.assertFalse(main._try_recover_accounting(runtime, {}, position))
+        blocked_probe.assert_not_called()
+        self.assertTrue(runtime.entries_disabled)
+
+        runtime.risk_exit = None
+        unresolved = {"sell": main.PendingReconciliation(
+            "SELL", "strategy_exit", 20, None, "candle", "bot-sell",
+            "ma_rsi_crossover", "{}", None, "broker_order", None, 0.0001995,
+            "strategy_exit",
+        )}
+        with patch("database.probe_writable") as unresolved_probe:
+            self.assertFalse(main._try_recover_accounting(runtime, unresolved, position))
+        unresolved_probe.assert_not_called()
+        self.assertTrue(runtime.entries_disabled)
+
+    def test_stale_broker_quantity_risk_sell_is_capped_to_proven_bot_exposure(self):
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            config, "DATABASE_PATH", str(Path(temp_dir) / "stale.sqlite")
+        ):
+            database.upsert_order(
+                order_id="buy-source", client_order_id="bot-source-buy",
+                symbol="BTC/USD", side="BUY", requested_notional=20,
+                quantity=0.004, fill_price=40000, reason="entry",
+                order_status="filled", position_before_quantity=0,
+                order_role="strategy_entry", asset_quantity_delta=0.004,
+            )
+            runtime = main.LiveRuntime(
+                active_position={
+                    "asset_id": "btc-asset", "source_order_id": "buy-source",
+                    "source_client_order_id": "bot-source-buy",
+                    "credited_quantity": 0.004, "source_confirmed": True,
+                },
+                ownership_mismatch=True, proven_bot_quantity=0.004,
+            )
+            before = make_position(qty="0.005")
+            after = make_position(qty="0.001")
+            sold = make_order("capped-sale", side="sell", filled_qty="0.004")
+            with (
+                patch.object(main, "get_open_btc_orders", return_value=[]),
+                patch.object(main, "get_btc_position", side_effect=[before, after]),
+                patch.object(main, "has_open_order", return_value=False),
+                patch.object(main, "get_order_by_client_order_id", return_value=None),
+                patch.object(main, "sell_btc", return_value=sold) as sell,
+                patch.object(main, "wait_for_order_fill", return_value=sold),
+                patch("database.set_active_bot_position"),
+                patch.object(main, "upsert_order"),
+            ):
+                result = main._submit_and_log_sell(
+                    "stop_loss", before, {}, None, runtime=runtime,
+                    role="risk_exit_stop_loss", risk_episode="stale", risk_attempt=0,
+                )
+            self.assertEqual(result, broker.OrderOutcome.FILLED)
+            self.assertEqual(sell.call_args.kwargs["quantity"], 0.004)
+            self.assertIsNone(runtime.active_position)
 
     def test_fee_deducted_broker_quantity_remains_owned_and_risk_check_runs(self):
         position = make_position(qty="0.000199500")
@@ -276,7 +484,7 @@ class LiveRiskAndOrderSafetyTests(unittest.TestCase):
         ids = [call.kwargs["client_order_id"] for call in sell.call_args_list]
         self.assertNotEqual(ids[0], ids[1])
 
-    def test_db_failure_after_buy_keeps_in_memory_ownership_and_disables_entries(self):
+    def test_post_fill_db_failure_keeps_in_memory_ownership_and_disables_entries(self):
         order = make_order("filled-buy", filled_qty="0.0002")
         position = make_position(qty="0.0001995")
         runtime = main.LiveRuntime()
@@ -286,7 +494,7 @@ class LiveRiskAndOrderSafetyTests(unittest.TestCase):
             patch.object(main, "wait_for_order_fill", return_value=order),
             patch.object(main, "get_btc_position", return_value=position),
             patch("database.set_active_bot_position", side_effect=OSError("disk full")),
-            patch.object(main, "upsert_order", side_effect=OSError("disk full")),
+            patch.object(main, "upsert_order", side_effect=[None, OSError("disk full"), OSError("disk full")]),
             redirect_stdout(io.StringIO()),
         ):
             outcome = main._submit_and_log_buy("entry", {}, "candle-1", runtime=runtime)
@@ -444,6 +652,48 @@ class LiveRiskAndOrderSafetyTests(unittest.TestCase):
         self.assertEqual(result, broker.OrderOutcome.PENDING)
         sell.assert_not_called()
 
+    def test_protective_pending_does_not_block_risk_sell_and_is_canceled_first(self):
+        protective = make_order(
+            "protect-risk", status="new", side="sell", client_order_id="protect-risk-cid", filled_qty="0"
+        )
+        canceled = make_order(
+            "protect-risk", status="canceled", side="sell", client_order_id="protect-risk-cid", filled_qty="0"
+        )
+        sale = make_order("risk-market-sale", side="sell", filled_qty="0.004")
+        events = []
+        pending = {
+            "protect-risk": main.PendingReconciliation(
+                "SELL", "protective_stop_limit", None, None, None,
+                "protect-risk-cid", "ma_rsi_crossover", "{}", None,
+                "broker_order", "2026-10-05T00:00:00+00:00", 0.004,
+                "protective_stop",
+            )
+        }
+
+        def open_orders():
+            events.append("list")
+            return [protective] if events.count("list") == 1 else []
+
+        def wait(order_id, **kwargs):
+            events.append(("reconcile", order_id))
+            return canceled if order_id == "protect-risk" else sale
+
+        with (
+            patch.object(main, "get_open_btc_orders", side_effect=open_orders),
+            patch.object(main, "get_btc_position", return_value=make_position()),
+            patch.object(main, "cancel_order", side_effect=lambda oid: events.append(("cancel", oid))),
+            patch.object(main, "wait_for_order_fill", side_effect=wait),
+            patch.object(main, "has_open_order", return_value=False),
+            patch.object(main, "get_order_by_client_order_id", return_value=None),
+            patch.object(main, "sell_btc", side_effect=lambda *a, **k: events.append("sell") or sale),
+            patch.object(main, "upsert_order"),
+        ):
+            outcome = main.execute_risk_exit("take_profit", pending, None)
+        self.assertEqual(outcome, broker.OrderOutcome.FILLED)
+        self.assertNotIn("protect-risk", pending)
+        self.assertLess(events.index(("cancel", "protect-risk")), events.index("sell"))
+        self.assertLess(events.index(("reconcile", "protect-risk")), events.index("sell"))
+
     def test_rejected_order_keeps_signal_candle_processed_across_repeated_polls(self):
         candle = "2026-10-05T01:00:00+00:00"
         last_processed = main.processed_candle_after_order(
@@ -491,6 +741,185 @@ class LiveRiskAndOrderSafetyTests(unittest.TestCase):
             main.restore_pending_orders(pending)
         self.assertEqual(pending["open-buy"].side, "BUY")
         self.assertIn("incomplete DB context", output.getvalue())
+
+
+class SubmissionIntentRecoveryTests(unittest.TestCase):
+    def test_preflight_lookup_failure_skips_buy_without_synthetic_pending_order(self):
+        pending = {}
+        with (
+            patch.object(main, "get_order_by_client_order_id", side_effect=RuntimeError("broker unavailable")),
+            patch.object(main, "buy_btc") as buy,
+            patch.object(main, "upsert_order") as write,
+            redirect_stdout(io.StringIO()),
+        ):
+            outcome = main._submit_and_log_buy("entry", pending, "candle-preflight")
+        self.assertEqual(outcome, broker.OrderOutcome.TERMINAL_NOT_FILLED)
+        buy.assert_not_called()
+        self.assertEqual(pending, {})
+        self.assertEqual(write.call_args.kwargs["order_status"], "entry_preflight_unavailable")
+        self.assertEqual(write.call_args.kwargs["submission_kind"], "preflight_unavailable")
+        self.assertIsNone(write.call_args.kwargs["client_order_id"])
+
+    def test_buy_intent_is_persisted_before_broker_post(self):
+        order = make_order("intent-order", client_order_id="will-be-attached")
+        events = []
+
+        def persist(**kwargs):
+            events.append(("persist", kwargs.get("order_status")))
+
+        def submit(*args, **kwargs):
+            self.assertEqual(events[0], ("persist", "submission_intent"))
+            events.append(("post", kwargs.get("client_order_id")))
+            return order
+
+        with (
+            patch.object(main, "get_order_by_client_order_id", return_value=None),
+            patch.object(main, "upsert_order", side_effect=persist),
+            patch.object(main, "buy_btc", side_effect=submit),
+            patch.object(main, "wait_for_order_fill", return_value=order) as wait,
+            patch.object(main, "_place_protective_stop"),
+        ):
+            result = main._submit_and_log_buy("entry", {}, "candle-intent")
+        self.assertEqual(result, broker.OrderOutcome.FILLED)
+        self.assertEqual(events[0], ("persist", "submission_intent"))
+        self.assertLess(events.index(("post", events[1][1])), events.index(("persist", "filled")))
+        wait.assert_called_once_with("intent-order")
+
+    def test_failed_buy_intent_write_prevents_broker_post(self):
+        runtime = main.LiveRuntime()
+        with (
+            patch.object(main, "get_order_by_client_order_id", return_value=None),
+            patch.object(main, "upsert_order", side_effect=OSError("database locked")),
+            patch.object(main, "buy_btc") as buy,
+            redirect_stdout(io.StringIO()),
+        ):
+            outcome = main._submit_and_log_buy("entry", {}, "candle-db-fail", runtime=runtime)
+        self.assertEqual(outcome, broker.OrderOutcome.TERMINAL_NOT_FILLED)
+        buy.assert_not_called()
+        self.assertTrue(runtime.entries_disabled)
+
+    def test_restart_recovers_crash_after_buy_submit_using_net_broker_quantity(self):
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            config, "DATABASE_PATH", str(Path(temp_dir) / "intent.sqlite")
+        ):
+            candle = "2026-10-05T00:00:00+00:00"
+            strategy = main._live_strategy()
+            client_id = main._strategy_order_id(strategy, candle, "BUY", role="strategy_entry")
+            accepted = make_order("accepted-buy", status="new", side="buy", client_order_id=client_id, filled_qty="0")
+            with (
+                patch.object(main, "get_order_by_client_order_id", return_value=None),
+                patch.object(main, "buy_btc", return_value=accepted),
+                patch.object(main, "wait_for_order_fill", side_effect=KeyboardInterrupt("simulated crash")),
+            ):
+                with self.assertRaises(KeyboardInterrupt):
+                    main._submit_and_log_buy("entry", {}, candle)
+            saved = database.get_order_records(pending_only=True)
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(saved[0]["order_status"], "new")
+            self.assertEqual(saved[0]["client_order_id"], client_id)
+            self.assertEqual(saved[0]["candle_timestamp"], candle)
+
+            filled = make_order("accepted-buy", status="filled", side="buy", client_order_id=client_id, filled_qty="0.003")
+            credited = make_position(qty="0.0029925")
+            runtime = main.LiveRuntime()
+            pending = {}
+            with (
+                patch.object(main, "get_open_btc_orders", return_value=[]),
+                patch.object(main, "reconcile_order", return_value=filled),
+                patch.object(main, "get_btc_position", return_value=credited),
+                patch.object(main, "_place_protective_stop"),
+            ):
+                main.restore_pending_orders(pending, strategy, runtime=runtime)
+            self.assertEqual(pending, {})
+            self.assertAlmostEqual(runtime.active_position["credited_quantity"], 0.0029925)
+            self.assertAlmostEqual(database.get_order_records()[0]["asset_quantity_delta"], 0.0029925)
+            owned, reason = main.bot_owns_position(credited, runtime)
+            self.assertTrue(owned, reason)
+
+    def test_restart_marks_pre_post_intent_terminal_after_confirmed_not_found(self):
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            config, "DATABASE_PATH", str(Path(temp_dir) / "not-created.sqlite")
+        ):
+            client_id = "bot-not-created"
+            created = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+            database.upsert_order(
+                order_id=f"client:{client_id}", client_order_id=client_id,
+                symbol="BTC/USD", side="BUY", requested_notional=20,
+                quantity=None, fill_price=None, reason="entry",
+                order_status="submission_intent", submission_kind="entry_intent",
+                created_at=created, reconcile_attempts=0,
+                position_before_quantity=0, order_role="strategy_entry",
+            )
+            pending = {}
+            with (
+                patch.object(main, "get_open_btc_orders", return_value=[]),
+                patch.object(main, "reconcile_order", side_effect=broker.BrokerOrderNotFound("404")),
+                patch.object(trade_config, "SUBMIT_UNKNOWN_MAX_AGE_SECONDS", 0),
+                patch.object(trade_config, "SUBMIT_UNKNOWN_MAX_RECONCILE_ATTEMPTS", 1),
+            ):
+                main.restore_pending_orders(pending)
+            self.assertEqual(pending, {})
+            self.assertEqual(database.get_order_records()[0]["order_status"], "terminal_not_created")
+
+    def test_restart_recovers_buy_accepted_before_broker_response(self):
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            config, "DATABASE_PATH", str(Path(temp_dir) / "response-lost.sqlite")
+        ):
+            candle = "2026-10-05T00:05:00+00:00"
+            strategy = main._live_strategy()
+            client_id = main._strategy_order_id(strategy, candle, "BUY", role="strategy_entry")
+            with (
+                patch.object(main, "get_order_by_client_order_id", return_value=None),
+                patch.object(main, "buy_btc", side_effect=KeyboardInterrupt("response lost")) as buy,
+            ):
+                with self.assertRaises(KeyboardInterrupt):
+                    main._submit_and_log_buy("entry", {}, candle)
+            buy.assert_called_once()
+            self.assertEqual(database.get_order_records(pending_only=True)[0]["order_status"], "submission_intent")
+
+            filled = make_order("response-lost-order", status="filled", side="buy", client_order_id=client_id, filled_qty="0.002")
+            credited = make_position(qty="0.001995")
+            runtime = main.LiveRuntime()
+            with (
+                patch.object(main, "get_open_btc_orders", return_value=[]),
+                patch.object(main, "reconcile_order", return_value=filled) as reconcile,
+                patch.object(main, "get_btc_position", return_value=credited),
+                patch.object(main, "_place_protective_stop"),
+            ):
+                main.restore_pending_orders({}, strategy, runtime=runtime)
+            reconcile.assert_called_once()
+            self.assertAlmostEqual(runtime.active_position["credited_quantity"], 0.001995)
+
+    def test_recovered_filled_sell_clears_active_provenance_when_broker_flat(self):
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            config, "DATABASE_PATH", str(Path(temp_dir) / "sell.sqlite")
+        ):
+            source_buy = "bot-source-buy"
+            database.set_active_bot_position({
+                "asset_id": "btc-asset", "source_order_id": "source-order",
+                "source_client_order_id": source_buy, "credited_quantity": 0.004,
+                "source_confirmed": True, "strategy_name": "ma_rsi_crossover",
+            })
+            sell_cid = "bot-recovered-sell"
+            database.upsert_order(
+                order_id="recovered-sell", client_order_id=sell_cid,
+                symbol="BTC/USD", side="SELL", requested_notional=160,
+                quantity=None, fill_price=None, reason="stop_loss",
+                order_status="timeout_pending", submission_kind="broker_order",
+                position_before_quantity=0.004, order_role="risk_exit_stop_loss",
+                strategy_name="ma_rsi_crossover",
+            )
+            filled = make_order("recovered-sell", status="filled", side="sell", client_order_id=sell_cid, filled_qty="0.004")
+            runtime = main.LiveRuntime(active_position=database.get_active_bot_position())
+            with (
+                patch.object(main, "get_open_btc_orders", return_value=[]),
+                patch.object(main, "reconcile_order", return_value=filled),
+                patch.object(main, "get_btc_position", return_value=None),
+            ):
+                main.restore_pending_orders({}, runtime=runtime)
+            self.assertIsNone(runtime.active_position)
+            self.assertIsNone(database.get_active_bot_position())
+            self.assertAlmostEqual(database.get_order_records()[0]["asset_quantity_delta"], -0.004)
 
 
 class LiveStrategyAndProtectionTests(unittest.TestCase):
@@ -573,7 +1002,7 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
             "protect-1", status="new", side="sell", client_order_id="protect-id"
         )
         canceled = make_order(
-            "protect-1", status="canceled", side="sell", client_order_id="protect-id"
+            "protect-1", status="canceled", side="sell", client_order_id="protect-id", filled_qty="0"
         )
         sale = make_order("normal-sale", side="sell", filled_qty="0.004")
         events = []
@@ -587,6 +1016,14 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
             return canceled if order_id == "protect-1" else sale
 
         position = make_position()
+        pending = {"protect-1": main.PendingReconciliation(
+            "SELL", "protective_stop_limit", None, None, "candle-1",
+            "protect-id", "ma_rsi_crossover", "{}", None,
+            "broker_order", "2026-10-05T00:00:00+00:00", 0.004,
+            "protective_stop",
+        )}
+        self.assertFalse(main._has_pending_nonprotective_sell(pending))
+        self.assertFalse(main._has_pending_entry_conflict(pending))
         with (
             patch.object(main, "get_open_btc_orders", side_effect=open_orders),
             patch.object(main, "cancel_order", side_effect=lambda order_id: events.append(("cancel", order_id))),
@@ -597,16 +1034,54 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
             patch.object(main, "sell_btc", side_effect=lambda *args, **kwargs: events.append("sell") or sale),
             patch.object(main, "upsert_order"),
         ):
-            main._submit_and_log_sell("stop_loss", position, {}, "candle-1")
+            main._submit_and_log_sell("signal_exit", position, pending, "candle-1")
         self.assertLess(events.index(("cancel", "protect-1")), events.index("sell"))
         self.assertLess(events.index(("reconcile", "protect-1")), events.index("sell"))
+        self.assertEqual(pending, {})
+
+    def test_protective_fill_during_cancel_race_refreshes_position_and_persists_delta(self):
+        protective = make_order(
+            "protect-race", status="new", side="sell", client_order_id="protect-race-cid", filled_qty="0"
+        )
+        filled = make_order(
+            "protect-race", status="filled", side="sell", client_order_id="protect-race-cid", filled_qty="0.004"
+        )
+        runtime = main.LiveRuntime(active_position={
+            "asset_id": "btc-asset", "source_order_id": "buy-order",
+            "source_client_order_id": "bot-buy", "credited_quantity": 0.004,
+            "source_confirmed": True,
+        })
+        rows = {}
+        pending = {"protect-race": main.PendingReconciliation(
+            "SELL", "protective_stop_limit", None, None, None,
+            "protect-race-cid", "ma_rsi_crossover", "{}", None,
+            "broker_order", "2026-10-05T00:00:00+00:00", 0.004,
+            "protective_stop",
+        )}
+        with (
+            patch.object(main, "get_open_btc_orders", side_effect=[[protective], []]),
+            patch.object(main, "cancel_order"),
+            patch.object(main, "wait_for_order_fill", return_value=filled),
+            patch.object(main, "get_btc_position", return_value=None) as refresh,
+            patch.object(main, "upsert_order", side_effect=lambda **kwargs: rows.update(kwargs)),
+            patch("database.set_active_bot_position"),
+        ):
+            main._cancel_protective_stops(
+                pending, main._live_strategy(), runtime,
+                position_before_quantity=0.004,
+            )
+        refresh.assert_called_once()
+        self.assertIsNone(runtime.active_position)
+        self.assertEqual(rows["order_role"], "protective_stop")
+        self.assertAlmostEqual(rows["asset_quantity_delta"], -0.004)
+        self.assertNotIn("protect-race", pending)
 
     def test_flat_position_cleanup_verifies_no_stale_protective_sell(self):
         protective = make_order(
             "protect-1", status="new", side="sell", client_order_id="protect-id"
         )
         canceled = make_order(
-            "protect-1", status="canceled", side="sell", client_order_id="protect-id"
+            "protect-1", status="canceled", side="sell", client_order_id="protect-id", filled_qty="0"
         )
         with (
             patch.object(main, "get_open_btc_orders", side_effect=[[protective], [protective], []]) as listing,
@@ -626,7 +1101,7 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
             patch.object(main, "get_open_btc_orders", return_value=[protective]),
             patch.object(main, "cancel_order"),
             patch.object(main, "wait_for_order_fill", return_value=make_order(
-                "protect-1", status="canceled", side="sell", client_order_id="protect-id"
+                "protect-1", status="canceled", side="sell", client_order_id="protect-id", filled_qty="0"
             )),
             patch.object(main, "upsert_order"),
         ):

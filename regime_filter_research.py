@@ -335,6 +335,10 @@ def _build_parser():
     parser.add_argument("--block-days", type=int, default=DEFAULT_BLOCK_DAYS)
     parser.add_argument("--blocks", type=int, default=DEFAULT_BLOCKS)
     parser.add_argument("--timeframe", default=DEFAULT_TIMEFRAME)
+    parser.add_argument(
+        "--end-time",
+        help="Freeze the common research end boundary (ISO-8601 UTC, e.g. 2022-10-26T04:00:00+00:00)",
+    )
     parser.add_argument("--output", default="regime_filter_results.csv")
     parser.add_argument("--no-csv", action="store_true")
     return parser
@@ -345,9 +349,18 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.block_days <= 0 or args.blocks <= 0:
         parser.error("--block-days and --blocks must be positive")
+    end_time = None
+    if args.end_time:
+        try:
+            end_time = datetime.fromisoformat(args.end_time.replace("Z", "+00:00"))
+            if end_time.tzinfo is None or end_time.utcoffset() != timedelta(0):
+                raise ValueError("timestamp must include a UTC timezone")
+            end_time = end_time.astimezone(timezone.utc)
+        except ValueError as error:
+            parser.error(f"--end-time must be an ISO-8601 UTC timestamp: {error}")
     run_regime_filter_research(
         block_days=args.block_days, blocks=args.blocks, timeframe=args.timeframe,
-        output=None if args.no_csv else args.output,
+        output=None if args.no_csv else args.output, research_end_time=end_time,
     )
     return 0
 
