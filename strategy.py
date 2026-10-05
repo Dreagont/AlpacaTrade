@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Any, Callable
 
+import pandas as pd
+
 import trade_config
 
 WARMUP_SAFETY_BARS = 10
@@ -205,10 +207,121 @@ def create_donchian_breakout_strategy(
     )
 
 
+def calculate_regime_filter(df, sma_period: int = 200, slope_lookback: int = 20):
+    """Add a causal bullish regime using only the current and prior closes."""
+    if sma_period <= 0 or slope_lookback <= 0:
+        raise ValueError("Regime SMA period and slope lookback must be positive")
+    prepared = df.copy()
+    close = prepared["close"]
+    prepared["regime_sma"] = close.rolling(sma_period, min_periods=sma_period).mean()
+    prepared["regime_sma_previous"] = prepared["regime_sma"].shift(slope_lookback)
+    ready = (
+        prepared["close"].notna()
+        & prepared["regime_sma"].notna()
+        & prepared["regime_sma_previous"].notna()
+    )
+    bullish = pd.Series(pd.NA, index=prepared.index, dtype="boolean")
+    bullish.loc[ready] = (
+        (prepared.loc[ready, "close"] > prepared.loc[ready, "regime_sma"])
+        & (prepared.loc[ready, "regime_sma"] > prepared.loc[ready, "regime_sma_previous"])
+    ).to_numpy()
+    prepared["regime_bullish"] = bullish
+    return prepared
+
+
+def create_regime_filtered_donchian_strategy(
+    entry_lookback: int = 20,
+    exit_lookback: int = 10,
+    regime_sma_period: int = 200,
+    regime_slope_lookback: int = 20,
+) -> StrategySpec:
+    if min(entry_lookback, exit_lookback, regime_sma_period, regime_slope_lookback) <= 0:
+        raise ValueError("Donchian and regime lookbacks must be positive")
+    prepare_donchian = _prepare_donchian(entry_lookback, exit_lookback)
+
+    def prepare(df):
+        return calculate_regime_filter(
+            prepare_donchian(df), regime_sma_period, regime_slope_lookback
+        )
+
+    def decide(prepared_df, index):
+        if index < 0 or index >= len(prepared_df):
+            return Decision("HOLD", "regime_filter_not_ready")
+        row = prepared_df.iloc[index]
+        needed = (
+            row.get("close"),
+            row.get("donchian_entry_high"),
+            row.get("donchian_exit_low"),
+            row.get("regime_sma"),
+            row.get("regime_sma_previous"),
+        )
+        try:
+            if not all(isfinite(float(value)) for value in needed):
+                return Decision("HOLD", "regime_filter_not_ready")
+            regime = row.get("regime_bullish")
+            if regime is None or regime is pd.NA or pd.isna(regime):
+                return Decision("HOLD", "regime_filter_not_ready")
+        except (TypeError, ValueError):
+            return Decision("HOLD", "regime_filter_not_ready")
+
+        if not bool(regime):
+            return Decision("SELL", "regime_filter_off")
+
+        previous_regime = (
+            prepared_df.iloc[index - 1].get("regime_bullish") if index > 0 else pd.NA
+        )
+        previous_ready = previous_regime is not pd.NA and not pd.isna(previous_regime)
+        if not previous_ready or not bool(previous_regime):
+            if index == 0:
+                return Decision("HOLD", "await_fresh_donchian_breakout")
+            previous = prepared_df.iloc[index - 1]
+            prior_values = (previous.get("close"), previous.get("donchian_entry_high"))
+            try:
+                prior_ready = all(isfinite(float(value)) for value in prior_values)
+            except (TypeError, ValueError):
+                prior_ready = False
+            fresh_breakout = (
+                prior_ready
+                and float(previous["close"]) <= float(previous["donchian_entry_high"])
+                and float(row["close"]) > float(row["donchian_entry_high"])
+            )
+            return (
+                Decision("BUY", "donchian_entry_breakout")
+                if fresh_breakout
+                else Decision("HOLD", "await_fresh_donchian_breakout")
+            )
+        return _donchian_decide_at(prepared_df, index)
+
+    def parameters():
+        return {
+            "entry_lookback": entry_lookback,
+            "exit_lookback": exit_lookback,
+            "regime_sma_period": regime_sma_period,
+            "regime_slope_lookback": regime_slope_lookback,
+            "stop_loss_percent": None,
+            "take_profit_percent": None,
+        }
+
+    return StrategySpec(
+        name="donchian_regime_filter",
+        _prepare_indicators=prepare,
+        _decide_at=decide,
+        _warmup_lookback=lambda: max(
+            entry_lookback, exit_lookback,
+            regime_sma_period + regime_slope_lookback,
+        ),
+        _parameters=parameters,
+        _stop_loss=lambda: None,
+        _take_profit=lambda: None,
+    )
+
+
 DONCHIAN_BREAKOUT = create_donchian_breakout_strategy()
+DONCHIAN_REGIME_FILTER = create_regime_filtered_donchian_strategy()
 STRATEGY_REGISTRY = {
     MA_RSI_CROSSOVER.name: MA_RSI_CROSSOVER,
     DONCHIAN_BREAKOUT.name: DONCHIAN_BREAKOUT,
+    DONCHIAN_REGIME_FILTER.name: DONCHIAN_REGIME_FILTER,
 }
 
 

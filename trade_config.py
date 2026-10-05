@@ -23,3 +23,11 @@ BROKER_STOP_LIMIT_PRICE_INCREMENT = 1.0
 
 PAPER_SMOKE_TEST_AMOUNT_USD = 20.0
 PAPER_SMOKE_MAX_BUY_FEE_RATE = 0.01
+
+# Ambiguous submissions only expire after repeated confirmed broker not-found results.
+SUBMIT_UNKNOWN_MAX_AGE_SECONDS = 900
+SUBMIT_UNKNOWN_MAX_RECONCILE_ATTEMPTS = 10
+
+# Risk exits retry sooner than the strategy candle cadence, but remain bounded.
+RISK_EXIT_RETRY_COOLDOWN_SECONDS = 60
+RISK_EXIT_MAX_ATTEMPTS = 3

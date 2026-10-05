@@ -29,6 +29,12 @@ class OrderOutcome(str, Enum):
     PENDING = "pending"
 
 
+class SubmissionFailureKind(str, Enum):
+    DEFINITIVE_REJECTION = "definitive_rejection"
+    AMBIGUOUS_SUBMISSION = "ambiguous_submission"
+    RETRYABLE_TRANSPORT_ERROR = "retryable_transport_error"
+
+
 class PositionLookupStatus(str, Enum):
     CONFIRMED_FLAT = "confirmed_flat"
     CONFIRMED_POSITION = "confirmed_position"
@@ -44,6 +50,10 @@ class PositionLookup:
 
 class BrokerPositionStateUnknown(RuntimeError):
     """Raised when Alpaca could not confirm whether the BTC account is flat."""
+
+
+class BrokerOrderNotFound(LookupError):
+    """The broker definitively returned 404 for a client/order identifier."""
 
 
 TERMINAL_ORDER_STATUSES = {
@@ -87,6 +97,25 @@ class OrderFillTimeoutError(TimeoutError):
         self.outcome = OrderOutcome.TIMEOUT_PENDING
         status = order_status_value(order)
         super().__init__(f"Order {order.id} is still non-terminal (status={status})")
+
+
+def classify_submission_exception(error: Exception) -> SubmissionFailureKind:
+    """Classify whether a failed submit definitively created no broker order.
+
+    Alpaca validation/auth 4xx responses are definitive rejections. HTTP 408 is
+    ambiguous because the server may have accepted the request before timing out;
+    5xx and transport failures are reconciled by client_order_id before any retry.
+    """
+    status_code = getattr(error, "status_code", None)
+    try:
+        status_code = int(status_code) if status_code is not None else None
+    except (TypeError, ValueError):
+        status_code = None
+    if status_code is not None and 400 <= status_code < 500 and status_code != 408:
+        return SubmissionFailureKind.DEFINITIVE_REJECTION
+    if isinstance(error, (TimeoutError, ConnectionError, OSError)):
+        return SubmissionFailureKind.RETRYABLE_TRANSPORT_ERROR
+    return SubmissionFailureKind.AMBIGUOUS_SUBMISSION
 
 
 load_dotenv()
@@ -290,7 +319,9 @@ def reconcile_order(order_id=None, *, client_order_id=None):
     if client_order_id:
         order = get_order_by_client_order_id(client_order_id)
         if order is None:
-            raise RuntimeError(f"Broker has no order for client_order_id={client_order_id}")
+            raise BrokerOrderNotFound(
+                f"Broker has no order for client_order_id={client_order_id}"
+            )
         return order
     if not order_id:
         raise ValueError("order_id or client_order_id is required")

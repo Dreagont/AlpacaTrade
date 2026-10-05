@@ -391,7 +391,7 @@ def run_research(
     largest_lookback = max(lookbacks)
     history_by_timeframe = {}
     fetch_error_by_timeframe = {}
-    data_quality_by_timeframe = {}
+    data_quality_by_window = {}
 
     # Fetch each timeframe once for the largest window and the largest selected
     # strategy warm-up. All windows, strategies, and cost modes reuse this frame.
@@ -406,16 +406,6 @@ def run_research(
                 warmup_bars=max_strategy_warmup,
                 end_time=aligned_research_end,
             )
-            data_quality_by_timeframe[timeframe] = backtest.data_quality_diagnostics(
-                history_by_timeframe[timeframe], timeframe
-            )
-            quality = data_quality_by_timeframe[timeframe]
-            print(
-                f"DATA QUALITY {timeframe}: expected={quality['expected_candle_count']} "
-                f"actual={quality['actual_candle_count']} missing="
-                f"{quality['missing_candle_count']} ({quality['missing_candle_percent']:.2f}%) "
-                f"zero_volume={quality['zero_volume_candle_count']}"
-            )
         except Exception as error:
             fetch_error_by_timeframe[timeframe] = error
 
@@ -428,14 +418,32 @@ def run_research(
                     _strategy_parameters_json(strategy) if strategy is not None else "{}"
                 )
                 coverage = None
-                data_quality = data_quality_by_timeframe.get(timeframe)
+                data_quality = data_quality_by_window.get((lookback_days, timeframe))
                 try:
-                    if strategy_name in strategy_error_by_name:
-                        raise strategy_error_by_name[strategy_name]
                     if timeframe in fetch_error_by_timeframe:
                         raise fetch_error_by_timeframe[timeframe]
 
                     bars = history_by_timeframe[timeframe]
+                    if data_quality is None:
+                        index = bars.index
+                        window_bars = bars.loc[(index >= requested_start) & (index < aligned_research_end)]
+                        data_quality = backtest.data_quality_diagnostics(
+                            window_bars,
+                            timeframe,
+                            start_time=requested_start,
+                            end_time=aligned_research_end,
+                        )
+                        data_quality_by_window[(lookback_days, timeframe)] = data_quality
+                        print(
+                            f"DATA QUALITY {lookback_days}d {timeframe}: "
+                            f"expected={data_quality['expected_candle_count']} "
+                            f"actual={data_quality['actual_candle_count']} missing="
+                            f"{data_quality['missing_candle_count']} "
+                            f"({data_quality['missing_candle_percent']:.2f}%) "
+                            f"zero_volume={data_quality['zero_volume_candle_count']}"
+                        )
+                    if strategy_name in strategy_error_by_name:
+                        raise strategy_error_by_name[strategy_name]
                     required_warmup = backtest.required_warmup_bars(strategy=strategy)
                     available_pretest_bars = int((bars.index < requested_start).sum())
                     if available_pretest_bars < required_warmup:

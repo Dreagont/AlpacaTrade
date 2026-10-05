@@ -1,9 +1,22 @@
+import json
 import sqlite3
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from math import isfinite
 from typing import Optional
 
 import config
+
+
+ACTIVE_BOT_POSITION_KEY = "active_bot_position"
+
+
+@dataclass(frozen=True)
+class BotOwnedQuantityDetails:
+    quantity: float
+    reliable: bool
+    evidence: str
 
 
 def _create_tables(connection: sqlite3.Connection) -> None:
@@ -44,7 +57,14 @@ def _create_tables(connection: sqlite3.Connection) -> None:
             order_status TEXT,
             client_order_id TEXT,
             strategy_name TEXT,
-            strategy_parameters_json TEXT
+            strategy_parameters_json TEXT,
+            asset_quantity_delta REAL,
+            submission_kind TEXT,
+            created_at TEXT,
+            reconcile_attempts INTEGER DEFAULT 0,
+            last_reconcile_at TEXT,
+            position_before_quantity REAL,
+            order_role TEXT
         )
         """
     )
@@ -63,6 +83,18 @@ def _create_tables(connection: sqlite3.Connection) -> None:
     for name in ("client_order_id", "strategy_name", "strategy_parameters_json"):
         if name not in columns:
             connection.execute(f"ALTER TABLE orders ADD COLUMN {name} TEXT")
+            columns.add(name)
+    for name, declaration in (
+        ("asset_quantity_delta", "REAL"),
+        ("submission_kind", "TEXT"),
+        ("created_at", "TEXT"),
+        ("reconcile_attempts", "INTEGER DEFAULT 0"),
+        ("last_reconcile_at", "TEXT"),
+        ("position_before_quantity", "REAL"),
+        ("order_role", "TEXT"),
+    ):
+        if name not in columns:
+            connection.execute(f"ALTER TABLE orders ADD COLUMN {name} {declaration}")
             columns.add(name)
     evaluation_columns = {
         row[1]
@@ -202,8 +234,16 @@ def upsert_order(
     client_order_id: Optional[str] = None,
     strategy_name: Optional[str] = None,
     strategy_parameters_json: Optional[str] = None,
+    asset_quantity_delta: Optional[float] = None,
+    submission_kind: Optional[str] = None,
+    created_at: Optional[str] = None,
+    reconcile_attempts: Optional[int] = None,
+    last_reconcile_at: Optional[str] = None,
+    position_before_quantity: Optional[float] = None,
+    order_role: Optional[str] = None,
 ) -> None:
     timestamp = timestamp or datetime.now(timezone.utc).isoformat()
+    created_at = created_at or timestamp
     connection = None
     try:
         connection = sqlite3.connect(config.DATABASE_PATH, timeout=5)
@@ -223,6 +263,13 @@ def upsert_order(
                 client_order_id,
                 strategy_name,
                 strategy_parameters_json,
+                asset_quantity_delta,
+                submission_kind,
+                created_at,
+                reconcile_attempts,
+                last_reconcile_at,
+                position_before_quantity,
+                order_role,
             )
             if client_order_id is not None:
                 connection.execute(
@@ -230,10 +277,29 @@ def upsert_order(
                     UPDATE orders SET timestamp=?, order_id=?, symbol=?, side=?,
                         requested_notional=?, quantity=?, fill_price=?, reason=?,
                         realized_gross_pnl=?, order_status=?, strategy_name=?,
-                        strategy_parameters_json=?
+                        strategy_parameters_json=?,
+                        asset_quantity_delta=COALESCE(?, asset_quantity_delta),
+                        submission_kind=COALESCE(?, submission_kind),
+                        created_at=COALESCE(orders.created_at, ?),
+                        reconcile_attempts=COALESCE(?, reconcile_attempts),
+                        last_reconcile_at=COALESCE(?, last_reconcile_at),
+                        position_before_quantity=COALESCE(?, position_before_quantity),
+                        order_role=COALESCE(?, order_role)
                     WHERE client_order_id=?
                     """,
-                    (*values[:10], strategy_name, strategy_parameters_json, client_order_id),
+                    (
+                        *values[:10],
+                        strategy_name,
+                        strategy_parameters_json,
+                        asset_quantity_delta,
+                        submission_kind,
+                        created_at,
+                        reconcile_attempts,
+                        last_reconcile_at,
+                        position_before_quantity,
+                        order_role,
+                        client_order_id,
+                    ),
                 )
                 if connection.execute("SELECT changes()").fetchone()[0]:
                     return
@@ -242,8 +308,11 @@ def upsert_order(
                 INSERT INTO orders (
                     timestamp, order_id, symbol, side, requested_notional,
                     quantity, fill_price, reason, realized_gross_pnl, order_status,
-                    client_order_id, strategy_name, strategy_parameters_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    client_order_id, strategy_name, strategy_parameters_json,
+                    asset_quantity_delta, submission_kind, created_at,
+                    reconcile_attempts, last_reconcile_at,
+                    position_before_quantity, order_role
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(order_id) WHERE order_id IS NOT NULL DO UPDATE SET
                     timestamp=excluded.timestamp,
                     symbol=excluded.symbol,
@@ -256,7 +325,14 @@ def upsert_order(
                     order_status=excluded.order_status,
                     client_order_id=excluded.client_order_id,
                     strategy_name=excluded.strategy_name,
-                    strategy_parameters_json=excluded.strategy_parameters_json
+                    strategy_parameters_json=excluded.strategy_parameters_json,
+                    asset_quantity_delta=COALESCE(excluded.asset_quantity_delta, orders.asset_quantity_delta),
+                    submission_kind=COALESCE(excluded.submission_kind, orders.submission_kind),
+                    created_at=COALESCE(orders.created_at, excluded.created_at),
+                    reconcile_attempts=COALESCE(excluded.reconcile_attempts, orders.reconcile_attempts),
+                    last_reconcile_at=COALESCE(excluded.last_reconcile_at, orders.last_reconcile_at),
+                    position_before_quantity=COALESCE(excluded.position_before_quantity, orders.position_before_quantity),
+                    order_role=COALESCE(excluded.order_role, orders.order_role)
                 """,
                 values,
             )
@@ -300,18 +376,113 @@ def get_order_records(*, pending_only: bool = False) -> list[dict]:
         connection.close()
 
 
-def get_bot_owned_btc_quantity() -> tuple[float, bool]:
-    """Return filled BTC quantity from bot records and whether evidence exists."""
+def get_active_bot_position() -> dict | None:
+    raw = get_state(ACTIVE_BOT_POSITION_KEY)
+    if raw is None:
+        return None
+    value = json.loads(raw)
+    if not isinstance(value, dict):
+        raise ValueError("Persisted active bot position is not an object")
+    return value
+
+
+def set_active_bot_position(position: dict | None) -> None:
+    if position is None:
+        set_state(ACTIVE_BOT_POSITION_KEY, None)
+        return
+    set_state(
+        ACTIVE_BOT_POSITION_KEY,
+        json.dumps(position, sort_keys=True, separators=(",", ":")),
+    )
+
+
+def get_bot_owned_btc_quantity_details() -> BotOwnedQuantityDetails:
+    """Use active position provenance first; never infer net BTC from gross fills."""
+    try:
+        active = get_active_bot_position()
+    except Exception:
+        return BotOwnedQuantityDetails(0.0, False, "active_position_record_unavailable")
+    if active is not None:
+        try:
+            active_quantity = float(active["credited_quantity"])
+        except (KeyError, TypeError, ValueError):
+            return BotOwnedQuantityDetails(0.0, False, "active_position_record_invalid")
+        if not isfinite(active_quantity) or active_quantity <= 0:
+            return BotOwnedQuantityDetails(0.0, False, "active_position_record_invalid")
+        return BotOwnedQuantityDetails(active_quantity, True, "active_position_provenance")
+
     records = get_order_records()
     relevant = [row for row in records if row["symbol"] in {"BTC/USD", "BTCUSD"}]
-    known_fills = [row for row in relevant if row["quantity"] is not None]
-    if not known_fills:
-        return 0.0, False
-    quantity = 0.0
-    for row in known_fills:
-        filled = abs(float(row["quantity"] or 0.0))
-        quantity += filled if row["side"].upper() == "BUY" else -filled
-    return quantity, True
+    if not relevant:
+        return BotOwnedQuantityDetails(0.0, False, "no_bot_order_evidence")
+    executed = [
+        row for row in relevant
+        if row.get("quantity") is not None and abs(float(row.get("quantity") or 0)) > 0
+    ]
+    if not executed:
+        return BotOwnedQuantityDetails(0.0, False, "no_filled_asset_delta_evidence")
+    if any(row.get("asset_quantity_delta") is None for row in executed):
+        return BotOwnedQuantityDetails(0.0, False, "legacy_or_incomplete_asset_delta_ledger")
+    quantity = sum(float(row["asset_quantity_delta"]) for row in executed)
+    if not isfinite(quantity):
+        return BotOwnedQuantityDetails(0.0, False, "invalid_asset_delta_ledger")
+    return BotOwnedQuantityDetails(quantity, True, "complete_asset_delta_ledger")
+
+
+def get_bot_owned_btc_quantity() -> tuple[float, bool]:
+    """Backward-compatible pair; quantity uses net broker-confirmed deltas only."""
+    details = get_bot_owned_btc_quantity_details()
+    return details.quantity, details.reliable
+
+
+def note_synthetic_order_reconciliation(client_order_id: str) -> dict | None:
+    """Record one confirmed not-found lookup for an ambiguous synthetic order."""
+    now = datetime.now(timezone.utc).isoformat()
+    connection = sqlite3.connect(config.DATABASE_PATH, timeout=5)
+    try:
+        with connection:
+            _create_tables(connection)
+            connection.execute(
+                "UPDATE orders SET reconcile_attempts=COALESCE(reconcile_attempts, 0)+1, "
+                "last_reconcile_at=? WHERE client_order_id=? "
+                "AND submission_kind='synthetic_ambiguous' "
+                "AND order_status='submit_unknown'",
+                (now, client_order_id),
+            )
+            row = connection.execute(
+                "SELECT created_at, reconcile_attempts, last_reconcile_at "
+                "FROM orders WHERE client_order_id=? "
+                "AND submission_kind='synthetic_ambiguous' "
+                "AND order_status='submit_unknown'",
+                (client_order_id,),
+            ).fetchone()
+        return (
+            {
+                "created_at": row[0],
+                "reconcile_attempts": row[1] or 0,
+                "last_reconcile_at": row[2],
+            }
+            if row
+            else None
+        )
+    finally:
+        connection.close()
+
+
+def mark_synthetic_order_not_created(client_order_id: str) -> bool:
+    connection = sqlite3.connect(config.DATABASE_PATH, timeout=5)
+    try:
+        with connection:
+            _create_tables(connection)
+            connection.execute(
+                "UPDATE orders SET order_status='terminal_not_created' "
+                "WHERE client_order_id=? AND submission_kind='synthetic_ambiguous' "
+                "AND order_status='submit_unknown'",
+                (client_order_id,),
+            )
+            return connection.execute("SELECT changes()").fetchone()[0] > 0
+    finally:
+        connection.close()
 
 
 def get_state(key: str) -> str | None:

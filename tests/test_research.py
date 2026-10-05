@@ -231,6 +231,39 @@ class ResearchTests(unittest.TestCase):
         self.assertIn("nested and overlapping", output)
         self.assertNotRegex(output.lower(), r"\b(best|winner|optimal|recommended strategy)\b")
 
+    def test_data_quality_is_measured_inside_each_requested_lookback(self):
+        aligned = datetime(2026, 10, 5, 0, tzinfo=timezone.utc)
+        oldest = aligned - timedelta(days=730)
+        warmup = required_warmup_bars(strategy=MA_RSI_CROSSOVER)
+        index = pd.date_range(
+            start=oldest - timedelta(hours=warmup),
+            end=aligned - timedelta(hours=1),
+            freq="1h",
+        )
+        bars = pd.DataFrame(
+            {name: [100.0] * len(index) for name in ("open", "high", "low", "close", "volume")},
+            index=index,
+        )
+
+        def run_success(_bars, **kwargs):
+            return backtest_result(kwargs["test_start"], aligned)
+
+        with (
+            patch("research.backtest.fetch_history", return_value=bars) as fetch,
+            patch("research.backtest.run_backtest", side_effect=run_success),
+            redirect_stdout(io.StringIO()),
+        ):
+            rows = research.run_research(
+                lookbacks=[90, 730], timeframes=["1Hour"], output=None,
+                research_end_time=aligned,
+            )
+        self.assertEqual(fetch.call_count, 1)
+        by_lookback = {row["lookback_days"]: row for row in rows}
+        self.assertEqual(by_lookback[90]["expected_candle_count"], 90 * 24)
+        self.assertEqual(by_lookback[730]["expected_candle_count"], 730 * 24)
+        self.assertEqual(by_lookback[90]["actual_candle_count"], 90 * 24)
+        self.assertEqual(by_lookback[730]["actual_candle_count"], 730 * 24)
+
     def test_warmup_shortfall_isolated_to_window_and_uses_clear_metadata(self):
         aligned = datetime(2026, 10, 5, 0, tzinfo=timezone.utc)
         long_start = aligned - timedelta(days=730)
