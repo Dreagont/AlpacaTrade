@@ -273,7 +273,7 @@ class LiveRiskAndOrderSafetyTests(unittest.TestCase):
         self.assertEqual(sell.call_args.args[0], "stop_loss")
         bars.assert_not_called()
 
-    def test_confirmed_broker_flat_clears_persisted_risk_episode(self):
+    def test_broker_flat_without_sell_evidence_retains_persisted_risk_episode(self):
         latch = json.dumps({
             "episode_id": "episode-flat", "reason": "stop_loss",
             "attempt": 4, "next_attempt_at": 0,
@@ -285,7 +285,7 @@ class LiveRiskAndOrderSafetyTests(unittest.TestCase):
         ):
             sell, _bars = self._run_one_risk_cycle(latched=latch, flat=True)
         sell.assert_not_called()
-        self.assertIn(None, persisted)
+        self.assertEqual(persisted, [])
 
     def test_rate_limit_is_retryable_and_does_not_create_terminal_safety_limit(self):
         class HttpError(Exception):
@@ -1094,7 +1094,7 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
         self.assertIn("PAPER BOT STARTED", output)
         self.assertNotIn("SAFE-HALT STRATEGY MISMATCH", output)
 
-    def test_flat_account_clears_stale_mismatched_provenance_and_starts(self):
+    def test_flat_report_retains_positive_mismatched_provenance_and_waits(self):
         active = {
             "asset_id": "btc-asset", "credited_quantity": 0.004,
             "source_confirmed": True, "strategy_name": "ma_rsi_crossover",
@@ -1102,10 +1102,19 @@ class LiveStrategyAndProtectionTests(unittest.TestCase):
         output, restore, save_active = self._run_until_first_sleep(
             "regime_only_4h", "4Hour", active, None
         )
-        restore.assert_called_once()
-        save_active.assert_called_once_with(None)
+        self.assertEqual(restore.call_count, 2)
+        save_active.assert_not_called()
         self.assertIn("PAPER BOT STARTED", output)
         self.assertNotIn("SAFE-HALT STRATEGY MISMATCH", output)
+
+    def test_flat_account_without_provenance_starts_normally(self):
+        with patch("database.get_order_records", return_value=[]):
+            output, restore, save_active = self._run_until_first_sleep(
+                "regime_only_4h", "4Hour", None, None
+            )
+        restore.assert_called_once()
+        save_active.assert_not_called()
+        self.assertIn("PAPER BOT STARTED", output)
 
     def test_persisted_regime_order_restores_with_registered_regime_strategy(self):
         import strategy

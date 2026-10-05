@@ -230,6 +230,16 @@ def _refresh_position_after_order(runtime, order, side, before_quantity, strateg
     before_quantity = float(before_quantity or 0.0)
     asset_delta = after_quantity - before_quantity
     if position is None:
+        active = runtime.active_position if runtime is not None else None
+        owned_before = _optional_float((active or {}).get("credited_quantity"))
+        filled = _optional_float(getattr(order, "filled_qty", None))
+        if not (
+            side == "SELL" and classify_order(order) == OrderOutcome.FILLED
+            and owned_before is not None and owned_before > 0
+            and filled is not None and filled + 1e-12 >= owned_before
+        ):
+            _mark_accounting_degraded(runtime, "post-order broker position is absent without confirmed full SELL closure")
+            return None, None
         _set_active_position(runtime, None)
     elif side == "BUY":
         _set_active_position(runtime, position, source_order=order, strategy=strategy)
@@ -261,8 +271,91 @@ def _refresh_position_after_order(runtime, order, side, before_quantity, strateg
 def _load_runtime_provenance(runtime):
     try:
         runtime.active_position = database.get_active_bot_position()
+        if runtime.active_position and runtime.active_position.get("credited_quantity") is None:
+            _mark_accounting_degraded(runtime, "confirmed BTC provenance awaits broker position visibility")
     except Exception as error:
         _mark_accounting_degraded(runtime, f"active BTC provenance unavailable: {error}")
+
+
+def _filled_source_entry(active, records):
+    if not active or not active.get("source_confirmed"):
+        return None
+    order_id = _identifier_string(active.get("source_order_id"))
+    client_id = _identifier_string(active.get("source_client_order_id"))
+    if not order_id or not client_id:
+        return None
+    matches = [row for row in records if (
+        _identifier_string(row.get("order_id")) == order_id
+        and _identifier_string(row.get("client_order_id")) == client_id
+        and row.get("side") == "BUY" and row.get("order_status") == "filled"
+        and row.get("order_role") == "strategy_entry"
+        and row.get("position_before_quantity") == 0
+        and (not active.get("strategy_name") or row.get("strategy_name") == active["strategy_name"])
+    )]
+    return matches[0] if len(matches) == 1 else None
+
+
+def _ledger_confirms_position_closed(active, records):
+    source = _filled_source_entry(active, records)
+    if source is None:
+        return False
+    balance = _optional_float(source.get("asset_quantity_delta"))
+    if balance is None or balance <= 0:
+        return False
+    sold = False
+    for row in records[records.index(source) + 1:]:
+        if row.get("symbol") not in {"BTC/USD", "BTCUSD"}:
+            continue
+        quantity = _optional_float(row.get("quantity"))
+        if quantity is None or quantity == 0:
+            if row.get("order_status") in {"filled", "partially_filled"} or row.get("asset_quantity_delta") not in {None, 0}:
+                return False
+            continue
+        before = _optional_float(row.get("position_before_quantity"))
+        delta = _optional_float(row.get("asset_quantity_delta"))
+        if (
+            row.get("side") != "SELL" or row.get("order_status") != "filled"
+            or row.get("order_role") not in {
+                "strategy_exit", "risk_exit_stop_loss", "risk_exit_take_profit", "protective_stop",
+            }
+            or row.get("strategy_name") != source.get("strategy_name")
+            or before is None or delta is None or delta >= 0 or quantity <= 0
+            or abs(delta) > quantity + 1e-12
+            or not isclose(before, balance, rel_tol=1e-9, abs_tol=1e-12)
+        ):
+            return False
+        sold = True
+        balance += delta
+        if balance < -1e-12:
+            return False
+    return sold and isclose(balance, 0.0, abs_tol=1e-12)
+
+
+def _flat_position_is_reconciled(runtime):
+    """A missing broker position alone cannot erase recorded exposure."""
+    try:
+        if runtime.active_position is None:
+            runtime.active_position = database.get_active_bot_position()
+        if runtime.active_position is not None:
+            if _ledger_confirms_position_closed(runtime.active_position, database.get_order_records()):
+                _set_active_position(runtime, None)
+                return database.get_active_bot_position() is None
+        else:
+            details = database.get_bot_owned_btc_quantity_details()
+            if (
+                (details.reliable and isclose(details.quantity, 0.0, abs_tol=1e-12))
+                or details.evidence == "no_bot_order_evidence"
+                or (details.evidence == "no_filled_asset_delta_evidence" and not any(
+                    row.get("symbol") in {"BTC/USD", "BTCUSD"}
+                    and row.get("side") == "BUY" and row.get("order_status") == "filled"
+                    for row in database.get_order_records()
+                ))
+            ):
+                return True
+        _mark_accounting_degraded(runtime, "broker reports flat but bot exposure is not reconciled; waiting")
+    except Exception as error:
+        _mark_accounting_degraded(runtime, f"flat BTC provenance reconciliation failed: {error}")
+    return False
 
 
 def _active_position_strategy_mismatch(runtime, strategy):
@@ -939,6 +1032,8 @@ def _proven_bot_quantity_for_stale_position(position, runtime):
 
 
 def _try_recover_accounting(runtime, pending_reconciliations, position):
+    if runtime is not None and position is None and not _flat_position_is_reconciled(runtime):
+        return False
     if runtime is None or not runtime.accounting_degraded:
         return not (runtime.entries_disabled if runtime else False)
     if runtime.risk_exit is not None:
@@ -954,25 +1049,13 @@ def _try_recover_accounting(runtime, pending_reconciliations, position):
             active = runtime.active_position
             if not active or not active.get("source_confirmed"):
                 return False
-            source_client_id = active.get("source_client_order_id")
-            source_order_id = active.get("source_order_id")
-            source = next((
-                row for row in database.get_order_records()
-                if row.get("client_order_id") == source_client_id
-                and str(row.get("order_id")) == str(source_order_id)
-            ), None)
-            if (
-                not source or source.get("side") != "BUY"
-                or source.get("order_role") != "strategy_entry"
-                or source.get("position_before_quantity") is None
-                or source.get("order_status") != "filled"
-            ):
+            if _filled_source_entry(active, database.get_order_records()) is None:
                 return False
             owned, _reason = bot_owns_position(position, runtime)
             if not owned:
                 return False
-        elif runtime.active_position is not None:
-            _set_active_position(runtime, None)
+            if database.get_active_bot_position() != runtime.active_position:
+                return False
         runtime.accounting_degraded = False
         runtime.entries_disabled = False
         print("ACCOUNTING RECOVERY COMPLETE: entries re-enabled after full state probe")
@@ -1698,7 +1781,9 @@ def bot_owns_position(position, runtime=None):
         return True, ""
     details_evidence = None
     try:
-        actual = abs(float(position.qty))
+        actual = _position_quantity(position)
+        if actual <= 0:
+            return False, "broker BTC position quantity is not positive"
         if not btc_symbol_matches(getattr(position, "symbol", None)):
             return False, "broker position identity is not BTC/USD"
         active = runtime.active_position if runtime and runtime.active_position else database.get_active_bot_position()
@@ -1706,26 +1791,44 @@ def bot_owns_position(position, runtime=None):
             expected = _optional_float(active.get("credited_quantity"))
             if not active.get("source_confirmed"):
                 return False, "active bot position provenance is incomplete"
-            if expected is None and runtime is not None:
-                # This process has a confirmed bot BUY but the exchange position
-                # became visible after the bounded post-fill lookup window.
-                expected = actual
-                runtime.active_position = dict(active)
-                runtime.active_position.update({
-                    "asset_id": str(getattr(position, "asset_id", None) or broker_position_identifier(position)),
-                    "credited_quantity": actual,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                })
-                try:
-                    database.set_active_bot_position(runtime.active_position)
-                except Exception as error:
-                    _mark_accounting_degraded(runtime, f"could not persist delayed BTC quantity: {error}")
-            if expected is None or expected <= 0:
-                return False, "active bot position provenance is incomplete"
             expected_asset = active.get("asset_id")
             actual_asset = str(getattr(position, "asset_id", None) or broker_position_identifier(position))
             if expected_asset and str(expected_asset) != actual_asset:
                 return False, "active bot position asset identity does not match broker position"
+            if expected is None and runtime is not None:
+                records = database.get_order_records()
+                source = _filled_source_entry(active, records)
+                gross_quantity = _optional_float(source.get("quantity")) if source else None
+                if (
+                    source is None or not btc_symbol_matches(source.get("symbol"))
+                    or gross_quantity is None or actual <= 0 or actual > gross_quantity + 1e-12
+                    or any(
+                        _optional_float(row.get("quantity"))
+                        or row.get("order_status") in {"filled", "partially_filled"}
+                        or row.get("asset_quantity_delta") not in {None, 0}
+                        for row in records[records.index(source) + 1:]
+                        if row.get("symbol") in {"BTC/USD", "BTCUSD"}
+                    )
+                ):
+                    return False, "delayed BTC position has no unambiguous filled source BUY"
+                delta = _optional_float(source.get("asset_quantity_delta"))
+                if delta is not None and not isclose(delta, actual, rel_tol=1e-9, abs_tol=1e-12):
+                    return False, "delayed BTC quantity differs from the filled source BUY ledger"
+                if delta is None:
+                    updated_source = {key: value for key, value in source.items() if key != "id"}
+                    updated_source["asset_quantity_delta"] = actual
+                    database.upsert_order(**updated_source)
+                quantified = dict(active)
+                quantified.update({
+                    "asset_id": actual_asset,
+                    "credited_quantity": actual,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                })
+                database.set_active_bot_position(quantified)
+                runtime.active_position = active = quantified
+                expected = actual
+            if expected is None or expected <= 0:
+                return False, "active bot position provenance is incomplete"
             reliable = True
         else:
             details = database.get_bot_owned_btc_quantity_details()
@@ -1865,6 +1968,8 @@ def run():
             print(f"SAFE-HALT BROKER POSITION STATE UNKNOWN: {state.error}")
             return
         position = state.position
+        if position is None:
+            _flat_position_is_reconciled(runtime)
         if _safe_halt_on_strategy_mismatch(position, runtime, strategy):
             return
         owned, ownership_reason = bot_owns_position(position, runtime)
@@ -1931,6 +2036,9 @@ def run():
                 time.sleep(trade_config.CHECK_INTERVAL_SECONDS)
                 continue
             position = state.position
+            if position is None and not _flat_position_is_reconciled(runtime):
+                time.sleep(trade_config.CHECK_INTERVAL_SECONDS)
+                continue
             if _safe_halt_on_strategy_mismatch(position, runtime, strategy):
                 return
             owned, ownership_reason = bot_owns_position(position, runtime)
@@ -1948,10 +2056,6 @@ def run():
                 print(f"SAFE-HALT_MANUAL_OR_UNKNOWN_POSITION: {ownership_reason}")
                 time.sleep(trade_config.CHECK_INTERVAL_SECONDS)
                 continue
-            if position is None and runtime.active_position is not None and not any(
-                ctx.side == "BUY" for ctx in pending_reconciliations.values()
-            ):
-                _set_active_position(runtime, None)
             market_price = None
             price_source = "market_data"
             try:
@@ -1993,7 +2097,7 @@ def run():
                         _advance_risk_exit_retry(runtime)
                     elif outcome == OrderOutcome.FILLED:
                         fresh = get_btc_position()
-                        if fresh is None:
+                        if fresh is None and _flat_position_is_reconciled(runtime):
                             runtime.risk_exit = None
                             risk_exit_state = None
                             _persist_risk_exit_state(runtime)
