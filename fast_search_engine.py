@@ -86,7 +86,7 @@ def simulate(bars, actions, reasons, *, timeframe, fee_rate, slippage_rate,
     start = int(bars.index.searchsorted(test_start or bars.index[0]))
     if start >= len(bars) - 1:
         raise ValueError("At least two simulation bars required")
-    hours = {"1Hour": 1, "2Hour": 2, "4Hour": 4}[timeframe]
+    hours = {"1Hour": 1, "2Hour": 2, "4Hour": 4, "1Day": 24}[timeframe]
     duration = pd.Timedelta(hours=hours)
     stamps = bars.index.as_unit("ns").asi8
     values = [np.ascontiguousarray(bars[name].to_numpy(dtype=float)) for name in ("open", "high", "low", "close")]
