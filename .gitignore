@@ -4,3 +4,6 @@ __pycache__/
 backtest_trades.csv
 *.csv
 last_backtest_output.txt
+
+data_cache/
+strategy_search_candidate.json

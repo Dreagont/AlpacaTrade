@@ -1,0 +1,27 @@
+name: Offline research tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt
+      # Directory form also works in PowerShell, which does not expand *.py here.
+      - run: python -m compileall -q .
+      - run: python -m unittest discover -s tests -t . -v
+      - run: python strategy_search.py --help

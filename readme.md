@@ -89,3 +89,111 @@ re-pricing itself remains based solely on recorded execution prices.
 
 The golden regression test explicitly pins `alpaca`; its fixture is unchanged.
 These commands only perform research/reporting and never submit orders.
+
+## Pre-registered BTC strategy search
+
+```bash
+python strategy_search.py --download
+python strategy_search.py
+# Only after a PASS produced a frozen candidate, and only when requested:
+python strategy_search.py --final-holdout
+```
+
+This research path uses public Binance `BTCUSDT` 1h klines, with no API key or
+trading client. The [Binance public API documentation](https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md)
+describes the kline endpoint. Download starts at 2018-01-01, paginates in batches
+of up to 1000, retries temporary errors with bounded backoff, and commits each
+page to `data_cache/binance_btcusdt_1h.sqlite`. It prints progress immediately and
+resumes at the last cached hour. Missing hours and historical truncated maintenance
+candles remain missing; download does not invent OHLC or heal old gaps. UTC 2h/4h
+resampling drops buckets without all constituent 1h candles. The cache is ignored
+by Git; all read connections use URI `mode=ro`, query-only SQL, and explicit close.
+
+The default search fixes the end to the current completed 4h UTC boundary and
+holds back the preceding **six calendar months**. Its SQL query reads only rows
+completed by the holdout start, including the cached sample used for equivalence.
+`--download` is explicit ingestion of the entire history through now, including
+holdout storage; it does not run a search. Optional `--as-of <UTC timestamp>` fixes
+the download/search cutoff for reproduction. `--cache`, `--output`, and
+`--candidate` select research artifact paths. Output paths cannot overwrite the
+trading database, the research cache, or one another.
+
+The frozen enumeration is **936 configurations**: 26 signal parameter pairs,
+12 overlay combinations (regime off/on, SL none/3%/6%, max hold none/120h), and
+three timeframes (1Hour/2Hour/4Hour). Families and parameters are exactly the
+registered trend SMA, MA cross, Donchian, and RSI pullback lists. RSI uses Wilder
+smoothing seeded by the first simple average; flat RSI is 50. Donchian channels
+exclude the current candle. Frozen 4h regime v1 uses SMA200, slope20, completed
+close timestamps, and the same 240-minute stale rule as short-term research.
+Missing/unavailable regime forces SELL for gated configs.
+
+The NumPy engine decides at completed candle t and executes at open t+1, using
+reference open-exit priority and conservative intrabar stop-before-target behavior.
+BUY fees reduce base quantity and SELL fees reduce quote proceeds. Every closed
+position fully reinvests into its next entry; the equity curve marks at each candle
+close. Numba accelerates the same kernel if installed; it is optional.
+Before every search, a fail-closed equivalence gate checks all four families,
+all 12 overlay combinations and all three timeframes (144 cases per dataset)
+against the unchanged reference backtester. It checks seeded synthetic and cached
+real data independently, including identical trade timestamps/reasons and absolute
+per-trade return tolerance `1e-9`. The gate uses the long-lookback representative
+parameter pair of each family. Missing cached history or a failed gate stops the
+search. An Alpaca/Binance 4h-close parity check on a bounded pre-holdout overlap is
+informational; venue/currency differences and fetch failures do not affect selection.
+
+Calendar folds start with train `[2019-01-01, 2020-01-01)` and test
+`[2020-01-01, 2020-04-01)`, advancing three months until the last full test ends
+before holdout. As of 2026-10-06 this gives **25 folds**, ending at 2026-04-01;
+unused days before the holdout are not OOS segments. Training windows overlap;
+OOS windows do not. Each config runs once continuously per cost scenario, with
+2018 indicator warm-up and a flat initial simulation state at 2019-01-01. Indicators
+and simulation are causal; selections and window metrics access only their own
+prefixes. Positions carry across train/test boundaries, with no forced fold exits.
+Completed trades belong to the half-open window containing their exit timestamp;
+their average uses the complete round-trip return on notional, including an entry
+before the window when applicable. Exposure is sampled on available candle opens.
+
+Train eligibility is exactly >=20 trades, >=1 trade/week, <=5/day, and >=5% invested.
+The score is compounded marked return divided by compounded marked max drawdown;
+ties prefer more trades, then stable config ID. Zero drawdown has score +infinity
+for positive return, -infinity for negative return, or zero for zero return. TOP-5
+is equal-weight at each fold start; its fold return is the mean of the five normalized
+constituent marked returns. Fold returns compound in chronological order. TOP-1 is
+reported alongside it. Continuous constituent positions are valued at the boundary;
+this research portfolio does not simulate extra live reallocation orders. No fold
+may silently shrink TOP-5 when fewer than five configs qualify; that run cannot PASS.
+
+The random control samples five distinct configs uniformly from each fold's same
+eligible set for 1000 paths, seed `20261006`, then compounds each path's OOS returns.
+Primary selection uses `binance_spot_bnb`; Alpaca and 2x Binance (both fee and
+slippage doubled) rerun full paths while keeping the primary selections fixed.
+Benchmarks use the same OOS segments: continuous frozen `regime_only_4h`, and BTC
+buy & hold bought once at the first OOS open with a hypothetical costed exit at
+the last OOS close. The latter pays costs once on each side, without repurchasing
+at every fold. Data quality is reported for each timeframe and each train/test fold.
+
+PASS requires all five registered criteria: TOP-5 OOS return >0, at least random
+p95, average completed trade return >0, positive folds >=55%, and return >0 at 2x
+Binance costs. Console output shows each criterion, the overall verdict, random
+percentiles, benchmarks, and mean selected IS/OOS scores. CSV contains quality,
+gate/parity, selections with parameters, portfolio/benchmark rows, random percentiles,
+PASS rules, and IS/OOS degradation. No historical result changes these rules.
+
+Only PASS writes `strategy_search_candidate.json`, freezing TOP-5 from the **last
+registered fold's training window** plus its original holdout boundaries and protocol
+fingerprint. The explicit holdout command requires that candidate, rejects protocol
+changes, reads only through its frozen holdout end, evaluates those five configs,
+and performs no new selection. Holdout is never run automatically. No live files,
+strategy registry entries, orders, or trading database writes are part of this search.
+
+Verification (all automated tests offline):
+
+```bash
+python -m compileall -q *.py tests
+python -m unittest discover -s tests -t . -v
+python strategy_search.py --help
+```
+
+`.github/workflows/research-tests.yml` runs the offline suite on Ubuntu and Windows
+with Python 3.12. It performs no data download, strategy search, holdout evaluation,
+or live trading.

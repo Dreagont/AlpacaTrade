@@ -7,7 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import closing, redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
@@ -17,7 +17,7 @@ import pandas as pd
 import backtest
 import config
 import paper_report
-from test_fee_profiles import history
+from tests.test_fee_profiles import history
 
 
 def order(identity, side, *, quantity=None, price=None, delta=None, timestamp=None, **extra):
@@ -36,7 +36,7 @@ def order(identity, side, *, quantity=None, price=None, delta=None, timestamp=No
 
 
 def make_db(path, orders):
-    with sqlite3.connect(path) as connection:
+    with closing(sqlite3.connect(path)) as connection, connection:
         connection.execute("CREATE TABLE orders (id INTEGER PRIMARY KEY, symbol TEXT, side TEXT, "
                            "order_status TEXT, timestamp TEXT, fill_price REAL, quantity REAL, "
                            "requested_notional REAL, asset_quantity_delta REAL, strategy_name TEXT, "
@@ -238,7 +238,7 @@ class PaperReportTests(unittest.TestCase):
         with self.assertRaises(sqlite3.OperationalError):
             paper_report.read_orders(self.db)
         self.assertFalse(self.db.exists())
-        with sqlite3.connect(self.db) as connection:
+        with closing(sqlite3.connect(self.db)) as connection, connection:
             connection.execute("CREATE TABLE orders (id INTEGER)")
         before = file_hash(self.db)
         with self.assertRaisesRegex(ValueError, "no migration"):
