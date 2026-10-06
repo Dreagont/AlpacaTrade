@@ -74,8 +74,7 @@ class RegimeFilterResearchTests(unittest.TestCase):
             with (
                 patch("regime_filter_research.backtest.fetch_history", return_value=bars) as fetch,
                 patch("regime_filter_research.backtest.run_backtest", wraps=original_backtest) as run,
-                patch("config.BACKTEST_FEE_PERCENT", 0.0),
-                patch("config.BACKTEST_SLIPPAGE_PERCENT", 0.0),
+                patch.dict("config.FEE_PROFILES", {"binance_spot_bnb": {"fee_rate": 0.0, "slippage_rate": 0.0}}),
                 redirect_stdout(io.StringIO()) as console,
             ):
                 rows = experiment.run_regime_filter_research(
@@ -153,8 +152,7 @@ class RegimeFilterResearchTests(unittest.TestCase):
         }, index=index)
         with (
             patch("regime_filter_research.backtest.fetch_history", return_value=bars),
-            patch("config.BACKTEST_FEE_PERCENT", 0.0),
-            patch("config.BACKTEST_SLIPPAGE_PERCENT", 0.0),
+            patch.dict("config.FEE_PROFILES", {"binance_spot_bnb": {"fee_rate": 0.0, "slippage_rate": 0.0}}),
             redirect_stdout(io.StringIO()),
         ):
             rows = experiment.run_regime_filter_research(

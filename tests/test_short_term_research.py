@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 import backtest
+import config
 import short_term_research as experiment
 import strategy as strategy_module
 from backtest import run_backtest
@@ -380,7 +381,8 @@ class ShortTermStrategyTests(unittest.TestCase):
         self.assertIn("RegimeDelta summary:", console.getvalue())
         self.assertIn("gated_entries=", console.getvalue())
         self.assertEqual(
-            totals[0]["configured_nominal_round_trip_friction_percent"], 0.6
+            totals[0]["configured_nominal_round_trip_friction_percent"],
+            2 * (config.BACKTEST_FEE_PERCENT + config.BACKTEST_SLIPPAGE_PERCENT) * 100
         )
         self.assertIn("same-path zero-cost edge", console.getvalue())
 

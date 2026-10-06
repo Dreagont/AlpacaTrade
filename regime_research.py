@@ -45,7 +45,7 @@ REGIME_METRICS = (
 CONTEXT_FIELDS = (
     "requested_research_time",
     "aligned_research_end",
-    "fee_rate",
+    "fee_profile", "fee_rate",
     "slippage_rate",
     "starting_capital",
     "expected_candle_count",
@@ -334,6 +334,7 @@ def run_regime_research(
     starting_capital: float = config.BACKTEST_STARTING_CAPITAL,
     output: str | Path | None = "regime_results.csv",
     research_end_time: datetime | None = None,
+    fee_profile: str = config.BACKTEST_FEE_PROFILE,
 ) -> list[dict[str, Any]]:
     """Run one continuous backtest per timeframe/strategy, then segment its marks."""
     if block_days <= 0 or blocks <= 0:
@@ -376,8 +377,9 @@ def run_regime_research(
         default=0,
     )
 
-    fee_rate = config.BACKTEST_FEE_PERCENT
-    slippage_rate = config.BACKTEST_SLIPPAGE_PERCENT
+    rates = config.get_fee_profile(fee_profile)
+    fee_rate = rates["fee_rate"]
+    slippage_rate = rates["slippage_rate"]
     bars_by_timeframe: dict[str, pd.DataFrame] = {}
     data_quality_by_timeframe: dict[str, dict[str, Any]] = {}
     fetch_errors: dict[str, Exception] = {}
@@ -504,6 +506,9 @@ def run_regime_research(
                         f"Block {block['block_index']} {timeframe} {strategy_name}  ERROR: {error}"
                     )
 
+    for row in rows:
+        row.update(fee_profile=fee_profile, fee_rate=fee_rate, slippage_rate=slippage_rate)
+
     _print_report(rows, regime_blocks, requested_research_time, aligned_end, starting_capital)
     if output is not None:
         output_path = Path(output)
@@ -527,12 +532,14 @@ def _print_report(
     starting_capital: float,
 ) -> None:
     print("\n=== CONTINUOUS NON-OVERLAPPING REGIME RESEARCH ===")
+    if rows:
+        config.print_fee_profile(rows[0]["fee_profile"], rows[0]["fee_rate"], rows[0]["slippage_rate"])
     print(f"Requested research time: {_timestamp(requested_research_time)}")
     print(f"Common aligned end: {_timestamp(aligned_end)}")
     print(
         f"Blocks: {len(blocks)} x {blocks[0]['block_days']} days | "
-        f"Fee: {config.BACKTEST_FEE_PERCENT:.2%} | "
-        f"Slippage: {config.BACKTEST_SLIPPAGE_PERCENT:.2%} | "
+        f"Fee: {rows[0]['fee_rate']:.2%} | "
+        f"Slippage: {rows[0]['slippage_rate']:.2%} | "
         f"Starting capital: ${starting_capital:,.2f}"
     )
     print(
@@ -589,6 +596,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output", default="regime_results.csv")
     parser.add_argument("--no-csv", action="store_true", help="Do not save a CSV")
+    config.add_fee_profile_argument(parser)
     return parser
 
 
@@ -600,6 +608,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.starting_capital <= 0:
         parser.error("--starting-capital must be greater than zero")
     run_regime_research(
+        fee_profile=args.fee_profile,
         block_days=args.block_days,
         blocks=args.blocks,
         timeframes=args.timeframes,

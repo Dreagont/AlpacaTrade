@@ -54,8 +54,9 @@ def _capture_run(strategy, bars, timeframe, liquidate_at_end):
         bars,
         starting_capital=config.BACKTEST_STARTING_CAPITAL,
         timeframe=timeframe,
-        fee_rate=config.BACKTEST_FEE_PERCENT,
-        slippage=config.BACKTEST_SLIPPAGE_PERCENT,
+        fee_profile="alpaca",
+        fee_rate=config.get_fee_profile("alpaca")["fee_rate"],
+        slippage=config.get_fee_profile("alpaca")["slippage_rate"],
         strategy=strategy,
         liquidate_at_end=liquidate_at_end,
     )

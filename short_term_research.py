@@ -124,7 +124,7 @@ CSV_FIELDS = tuple(dict.fromkeys((
     "aligned_research_end",
     "execution_timeframe",
     "regime_timeframe",
-    "fee_rate",
+    "fee_profile", "fee_rate",
     "slippage_rate",
     "configured_nominal_round_trip_friction_percent",
     "starting_capital",
@@ -675,6 +675,7 @@ def run_short_term_research(
     blocks: int = DEFAULT_BLOCKS,
     output: str | Path | None = DEFAULT_OUTPUT,
     research_end_time: datetime | None = None,
+    fee_profile: str = config.BACKTEST_FEE_PROFILE,
 ) -> list[dict[str, Any]]:
     """Run both frozen strategies once continuously, then report 90-day blocks."""
     if block_days <= 0 or blocks <= 0:
@@ -699,8 +700,9 @@ def run_short_term_research(
     test_start = regime_blocks[0]["block_start"]
     total_days = block_days * blocks
     starting_capital = config.BACKTEST_STARTING_CAPITAL
-    fee_rate = config.BACKTEST_FEE_PERCENT
-    slippage = config.BACKTEST_SLIPPAGE_PERCENT
+    rates = config.get_fee_profile(fee_profile)
+    fee_rate = rates["fee_rate"]
+    slippage = rates["slippage_rate"]
     execution_warmup = backtest.required_warmup_bars(strategy=baseline)
     regime_warmup = (
         REGIME_SMA_PERIOD
@@ -859,6 +861,9 @@ def run_short_term_research(
                 - baseline_row["block_net_return_percent"]
             )
 
+    for row in rows:
+        row.update(fee_profile=fee_profile, fee_rate=fee_rate, slippage_rate=slippage)
+
     _print_report(
         rows, results, regime_blocks, requested_time, aligned_end,
         starting_capital, fee_rate, slippage,
@@ -893,6 +898,8 @@ def _print_report(
     default_window: bool,
 ) -> None:
     print("\n=== SHORT-TERM BTC RESEARCH: 30Min DONCHIAN A/B ===")
+    if rows:
+        config.print_fee_profile(rows[0]["fee_profile"], rows[0]["fee_rate"], rows[0]["slippage_rate"])
     print(f"Requested research time: {requested_time.isoformat()}")
     print(f"Common aligned end: {aligned_end.isoformat()}")
     print(f"Test start: {blocks[0]['block_start'].isoformat()}")
@@ -1039,6 +1046,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     parser.add_argument("--no-csv", action="store_true")
+    config.add_fee_profile_argument(parser)
     return parser
 
 
@@ -1057,6 +1065,7 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError as error:
             parser.error(f"--end-time must be an ISO-8601 UTC timestamp: {error}")
     run_short_term_research(
+        fee_profile=args.fee_profile,
         block_days=args.block_days,
         blocks=args.blocks,
         output=None if args.no_csv else args.output,

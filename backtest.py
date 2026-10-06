@@ -217,6 +217,7 @@ def run_backtest(
     test_start: Optional[Any] = None,
     strategy: StrategySpec | None = None,
     liquidate_at_end: bool = True,
+    fee_profile: str | None = None,
 ) -> dict[str, Any]:
     starting_capital = (
         config.BACKTEST_STARTING_CAPITAL
@@ -224,8 +225,18 @@ def run_backtest(
         else starting_capital
     )
     timeframe = timeframe or trade_config.LIVE_TIMEFRAME
-    fee_rate = config.BACKTEST_FEE_PERCENT if fee_rate is None else fee_rate
-    slippage = config.BACKTEST_SLIPPAGE_PERCENT if slippage is None else slippage
+    profile_name = fee_profile or config.BACKTEST_FEE_PROFILE
+    rates = config.get_fee_profile(profile_name)
+    fee_rate = rates["fee_rate"] if fee_rate is None else fee_rate
+    slippage = rates["slippage_rate"] if slippage is None else slippage
+    if fee_rate != rates["fee_rate"] or slippage != rates["slippage_rate"]:
+        if fee_profile is not None:
+            raise ValueError("Explicit rates conflict with the selected fee profile")
+        profile_name = next(
+            (name for name, value in config.FEE_PROFILES.items()
+             if value == {"fee_rate": fee_rate, "slippage_rate": slippage}),
+            "custom",
+        )
     selected_strategy = strategy or MA_RSI_CROSSOVER
     stop_loss_percent = selected_strategy.stop_loss_percent
     take_profit_percent = selected_strategy.take_profit_percent
@@ -569,6 +580,10 @@ def run_backtest(
             "entry_slippage_cost",
         ],
     )
+    for frame in (trades_frame, entry_events_frame):
+        frame["fee_profile"] = profile_name
+        frame["fee_rate"] = fee_rate
+        frame["slippage_rate"] = slippage
     return {
         "strategy_name": selected_strategy.name,
         "strategy_parameters": selected_strategy.parameters,
@@ -580,6 +595,9 @@ def run_backtest(
         "warmup_bars": available_pretest_bars,
         "required_warmup_bars": required_strategy_warmup_bars,
         "available_pretest_bars": available_pretest_bars,
+        "fee_profile": profile_name,
+        "fee_rate": fee_rate,
+        "slippage_rate": slippage,
         "starting_capital": starting_capital,
         "ending_capital": ending_capital,
         "ending_cash": ending_cash,
@@ -721,6 +739,7 @@ def _exit_reason_rows(result: dict[str, Any]) -> None:
 def print_report(result: dict[str, Any], title=None) -> None:
     title = title or f"{config.SYMBOL} {result.get('strategy_name', 'BACKTEST')} BACKTEST"
     print(f"\n=== {title} ===")
+    config.print_fee_profile(result["fee_profile"], result["fee_rate"], result["slippage_rate"])
     print(f"Period: {result['start_time']} to {result['end_time']}")
     print(f"Required warm-up bars: {result.get('required_warmup_bars', result['warmup_bars'])}")
     print(
@@ -817,6 +836,7 @@ def print_report(result: dict[str, Any], title=None) -> None:
 
 def print_zero_cost_diagnostic(result: dict[str, Any]) -> None:
     print("\n=== ZERO-COST DIAGNOSTIC (not the main result) ===")
+    config.print_fee_profile(result["fee_profile"], result["fee_rate"], result["slippage_rate"])
     print(f"Ending capital: {_format_money(result['ending_capital'])}")
     print(f"Net PnL: {_format_money(result['net_profit'])}")
     print(f"Return: {_format_percent(result['strategy_return'])}")
@@ -825,7 +845,7 @@ def print_zero_cost_diagnostic(result: dict[str, Any]) -> None:
     print("Fees and slippage are both set to zero for this diagnostic only.")
 
 
-def _run_main() -> int:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=f"Backtest the {config.SYMBOL} MA/RSI strategy"
     )
@@ -847,7 +867,13 @@ def _run_main() -> int:
         help="Also run the same strategy with zero fees and slippage",
     )
     parser.add_argument("--no-csv", action="store_true", help="Do not save trade history")
-    args = parser.parse_args()
+    config.add_fee_profile_argument(parser)
+    return parser
+
+
+def _run_main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
+    args = parser.parse_args(argv)
     if args.lookback_days <= 0:
         parser.error("--lookback-days must be positive")
 
@@ -855,7 +881,8 @@ def _run_main() -> int:
         bars = fetch_history(args.lookback_days, args.timeframe)
         test_start = bars.attrs.get("test_start")
         result = run_backtest(
-            bars, args.starting_capital, args.timeframe, test_start=test_start
+            bars, args.starting_capital, args.timeframe, test_start=test_start,
+            fee_profile=args.fee_profile
         )
         zero_cost_result = (
             run_backtest(

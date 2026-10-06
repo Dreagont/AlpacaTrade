@@ -33,7 +33,7 @@ CSV_FIELDS = (
     "row_type",
     "block_index", "block_start", "block_end", "block_days", "timeframe",
     "strategy_name", "strategy_parameters_json", "error",
-    "requested_research_time", "aligned_research_end", "fee_rate", "slippage_rate",
+    "requested_research_time", "aligned_research_end", "fee_profile", "fee_rate", "slippage_rate",
     "starting_capital", "raw_btc_return_percent", "starting_equity", "ending_equity",
     "block_net_return_percent", "total_net_return_percent",
     "block_candle_mark_max_drawdown_percent",
@@ -266,6 +266,7 @@ def run_regime_filter_research(
     *, block_days=DEFAULT_BLOCK_DAYS, blocks=DEFAULT_BLOCKS,
     timeframe=DEFAULT_TIMEFRAME, output="regime_filter_results.csv",
     research_end_time=None, starting_capital=config.BACKTEST_STARTING_CAPITAL,
+    fee_profile: str = config.BACKTEST_FEE_PROFILE,
 ):
     if block_days <= 0 or blocks <= 0:
         raise ValueError("block-days and blocks must be positive")
@@ -293,8 +294,9 @@ def run_regime_filter_research(
     )
     oldest_start = regime_blocks[0]["block_start"]
     total_days = block_days * blocks
-    fee_rate = config.BACKTEST_FEE_PERCENT
-    slippage_rate = config.BACKTEST_SLIPPAGE_PERCENT
+    rates = config.get_fee_profile(fee_profile)
+    fee_rate = rates["fee_rate"]
+    slippage_rate = rates["slippage_rate"]
 
     rows = []
     result_by_strategy = {}
@@ -525,6 +527,9 @@ def run_regime_filter_research(
             )
 
     report_rows = rows + total_rows
+    for row in report_rows:
+        row.update(fee_profile=fee_profile, fee_rate=fee_rate, slippage_rate=slippage_rate)
+
     _print_report(
         report_rows, result_by_strategy, regime_blocks, requested_time, aligned_end,
         starting_capital, fee_rate, slippage_rate,
@@ -544,6 +549,8 @@ def _print_report(
     fee_rate, slippage_rate,
 ):
     print("\n=== CAUSAL REGIME FILTER RESEARCH ===")
+    if rows:
+        config.print_fee_profile(rows[0]["fee_profile"], rows[0]["fee_rate"], rows[0]["slippage_rate"])
     print(f"Requested research time: {requested_time.isoformat()}")
     print(f"Common aligned end: {aligned_end.isoformat()}")
     print(f"Blocks: {len(blocks)} x {blocks[0]['block_days']} days")
@@ -731,6 +738,7 @@ def _build_parser():
     )
     parser.add_argument("--output", default="regime_filter_results.csv")
     parser.add_argument("--no-csv", action="store_true")
+    config.add_fee_profile_argument(parser)
     return parser
 
 
@@ -749,6 +757,7 @@ def main(argv=None):
         except ValueError as error:
             parser.error(f"--end-time must be an ISO-8601 UTC timestamp: {error}")
     run_regime_filter_research(
+        fee_profile=args.fee_profile,
         block_days=args.block_days, blocks=args.blocks, timeframe=args.timeframe,
         output=None if args.no_csv else args.output, research_end_time=end_time,
     )
